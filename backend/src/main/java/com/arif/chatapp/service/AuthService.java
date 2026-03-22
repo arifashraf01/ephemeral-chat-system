@@ -4,6 +4,7 @@ import com.arif.chatapp.model.Otp;
 import com.arif.chatapp.model.User;
 import com.arif.chatapp.repository.OtpRepository;
 import com.arif.chatapp.repository.UserRepository;
+import com.arif.chatapp.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
+    private final JwtUtil jwtUtil;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -67,6 +69,6 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
 
-        return "Login successful";
+        return jwtUtil.generateToken(email);
     }
 }
