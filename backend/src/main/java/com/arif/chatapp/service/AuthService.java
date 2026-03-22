@@ -5,6 +5,7 @@ import com.arif.chatapp.model.User;
 import com.arif.chatapp.repository.OtpRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -18,6 +19,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public void sendOtp(String email) {
         userRepository.findByEmail(email)
@@ -35,7 +38,7 @@ public class AuthService {
         otpRepository.save(otp);
     }
 
-    public void verifyOtp(String email, String otp) {
+    public void verifyOtp(String email, String otp, String password) {
         Otp savedOtp = otpRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("OTP not found"));
 
@@ -49,6 +52,7 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
         user.setVerified(true);
         userRepository.save(user);
 
@@ -56,7 +60,13 @@ public class AuthService {
     }
 
     public String login(String email, String password) {
-        // TODO: implement authentication and token issuance
-        return null;
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid credentials");
+        }
+
+        return "Login successful";
     }
 }

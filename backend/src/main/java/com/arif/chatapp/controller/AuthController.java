@@ -20,8 +20,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public void verifyOtp(@RequestParam String email, @RequestParam String otp) {
-        authService.verifyOtp(email, otp);
+    public void verifyOtp(@RequestParam String email, @RequestParam String otp, @RequestParam String password) {
+        authService.verifyOtp(email, otp, password);
     }
 
     @PostMapping("/login")
