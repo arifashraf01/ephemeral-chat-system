@@ -1,6 +1,7 @@
 package com.arif.chatapp.service;
 
 import com.arif.chatapp.model.Otp;
+import com.arif.chatapp.model.User;
 import com.arif.chatapp.repository.OtpRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,23 @@ public class AuthService {
     }
 
     public void verifyOtp(String email, String otp) {
-        // TODO: implement OTP validation flow
+        Otp savedOtp = otpRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("OTP not found"));
+
+        if (!savedOtp.getOtpCode().equals(otp)) {
+            throw new IllegalArgumentException("Invalid OTP");
+        }
+
+        if (savedOtp.getExpiresAt().isBefore(Instant.now())) {
+            throw new IllegalArgumentException("OTP expired");
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setVerified(true);
+        userRepository.save(user);
+
+        otpRepository.delete(savedOtp);
     }
 
     public String login(String email, String password) {
