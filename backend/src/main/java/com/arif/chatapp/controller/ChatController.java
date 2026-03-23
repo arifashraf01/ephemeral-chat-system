@@ -29,4 +29,37 @@ public class ChatController {
 		);
 		return saved;
 	}
+
+	@MessageMapping("/chat.typing")
+	public void typing(@Payload TypingPayload payload) {
+		if (payload == null || payload.getReceiverId() == null) {
+			return;
+		}
+		messagingTemplate.convertAndSendToUser(
+				String.valueOf(payload.getReceiverId()),
+				"/queue/typing",
+				"typing"
+		);
+	}
+
+	private static class TypingPayload {
+		private Long senderId;
+		private Long receiverId;
+
+		public Long getSenderId() {
+			return senderId;
+		}
+
+		public void setSenderId(Long senderId) {
+			this.senderId = senderId;
+		}
+
+		public Long getReceiverId() {
+			return receiverId;
+		}
+
+		public void setReceiverId(Long receiverId) {
+			this.receiverId = receiverId;
+		}
+	}
 }
