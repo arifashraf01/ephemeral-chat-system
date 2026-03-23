@@ -45,4 +45,11 @@ public class MessageService {
 
         return messageRepository.save(message);
     }
+
+        public void markAsSeen(Long messageId) {
+                Message message = messageRepository.findById(messageId)
+                                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+                message.setStatus(Message.Status.SEEN);
+                messageRepository.save(message);
+        }
 }
