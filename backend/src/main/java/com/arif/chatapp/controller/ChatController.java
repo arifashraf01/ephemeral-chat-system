@@ -72,7 +72,7 @@ public class ChatController {
 		if (payload == null || payload.getUserId() == null || payload.getPartnerId() == null) {
 			return;
 		}
-		messageService.deleteChatMessages(payload.getUserId(), payload.getPartnerId());
+		messageService.deleteMessagesForUser(payload.getUserId(), payload.getPartnerId());
 	}
 
 	private static class TypingPayload {
