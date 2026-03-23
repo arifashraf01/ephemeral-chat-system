@@ -69,4 +69,30 @@ public class MessageService {
                         messageRepository.deleteAll(toDelete);
                 }
         }
+
+        public void deleteMessagesForUser(Long userId, Long chatPartnerId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                User partner = userRepository.findById(chatPartnerId)
+                                .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
+
+                List<Message> messages = new ArrayList<>();
+                messages.addAll(messageRepository.findBySenderAndReceiver(user, partner));
+                messages.addAll(messageRepository.findBySenderAndReceiver(partner, user));
+
+                if (messages.isEmpty()) {
+                        return;
+                }
+
+                for (Message message : messages) {
+                        if (user.equals(message.getSender())) {
+                                message.setDeletedForSender(true);
+                        }
+                        if (user.equals(message.getReceiver())) {
+                                message.setDeletedForReceiver(true);
+                        }
+                }
+
+                messageRepository.saveAll(messages);
+        }
 }
