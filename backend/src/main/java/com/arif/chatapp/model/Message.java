@@ -51,6 +51,14 @@ public class Message {
     @Builder.Default
     private Status status = Status.SENT;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deletedForSender = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deletedForReceiver = false;
+
     @PrePersist
     void onCreate() {
         if (status == null) {
