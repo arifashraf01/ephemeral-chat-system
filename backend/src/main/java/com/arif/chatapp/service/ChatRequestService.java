@@ -42,7 +42,19 @@ public class ChatRequestService {
     }
 
     public void acceptRequest(Long requestId, Long userId) {
-        // TODO: implement accept request logic
+        ChatRequest request = chatRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+
+        if (!request.getReceiver().getId().equals(userId)) {
+            throw new IllegalArgumentException("Only receiver can accept the request");
+        }
+
+        if (request.getStatus() != ChatRequest.Status.PENDING) {
+            throw new IllegalArgumentException("Request is not pending");
+        }
+
+        request.setStatus(ChatRequest.Status.ACCEPTED);
+        chatRequestRepository.save(request);
     }
 
     public void rejectRequest(Long requestId, Long userId) {
