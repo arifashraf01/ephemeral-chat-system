@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +53,20 @@ public class MessageService {
                                 .orElseThrow(() -> new IllegalArgumentException("Message not found"));
                 message.setStatus(Message.Status.SEEN);
                 messageRepository.save(message);
+        }
+
+        public void deleteChatMessages(Long userId, Long partnerId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                User partner = userRepository.findById(partnerId)
+                                .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
+
+                List<Message> toDelete = new ArrayList<>();
+                toDelete.addAll(messageRepository.findBySenderAndReceiver(user, partner));
+                toDelete.addAll(messageRepository.findBySenderAndReceiver(partner, user));
+
+                if (!toDelete.isEmpty()) {
+                        messageRepository.deleteAll(toDelete);
+                }
         }
 }

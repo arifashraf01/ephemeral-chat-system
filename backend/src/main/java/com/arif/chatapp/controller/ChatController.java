@@ -3,6 +3,7 @@ package com.arif.chatapp.controller;
 import com.arif.chatapp.model.Message;
 import com.arif.chatapp.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ChatController {
 
 	private final MessageService messageService;
@@ -57,6 +59,22 @@ public class ChatController {
 		}
 	}
 
+	@MessageMapping("/chat.open")
+	public void openChat(@Payload ChatSessionPayload payload) {
+		if (payload == null || payload.getUserId() == null || payload.getPartnerId() == null) {
+			return;
+		}
+		log.info("Chat opened between {} and {}", payload.getUserId(), payload.getPartnerId());
+	}
+
+	@MessageMapping("/chat.close")
+	public void closeChat(@Payload ChatSessionPayload payload) {
+		if (payload == null || payload.getUserId() == null || payload.getPartnerId() == null) {
+			return;
+		}
+		messageService.deleteChatMessages(payload.getUserId(), payload.getPartnerId());
+	}
+
 	private static class TypingPayload {
 		private Long senderId;
 		private Long receiverId;
@@ -96,6 +114,27 @@ public class ChatController {
 
 		public void setSenderId(Long senderId) {
 			this.senderId = senderId;
+		}
+	}
+
+	private static class ChatSessionPayload {
+		private Long userId;
+		private Long partnerId;
+
+		public Long getUserId() {
+			return userId;
+		}
+
+		public void setUserId(Long userId) {
+			this.userId = userId;
+		}
+
+		public Long getPartnerId() {
+			return partnerId;
+		}
+
+		public void setPartnerId(Long partnerId) {
+			this.partnerId = partnerId;
 		}
 	}
 }
