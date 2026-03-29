@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -61,6 +62,33 @@ const linkStyle = {
 }
 
 export default function Login() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    try {
+      const response = await fetch('http://localhost:8080/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data?.token) {
+        throw new Error('Login failed')
+      }
+
+      localStorage.setItem('token', data.token)
+      navigate('/requests')
+    } catch (error) {
+      alert('Login failed. Please check your credentials and try again.')
+    }
+  }
+
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
@@ -69,12 +97,26 @@ export default function Login() {
           Sign in to continue the chat.
         </p>
 
-        <form>
+        <form onSubmit={handleSubmit}>
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>Email</label>
-          <input type="email" placeholder="you@example.com" style={inputStyle} />
+          <input
+            type="email"
+            placeholder="you@example.com"
+            style={inputStyle}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
 
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>Password</label>
-          <input type="password" placeholder="••••••••" style={inputStyle} />
+          <input
+            type="password"
+            placeholder="••••••••"
+            style={inputStyle}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
           <button type="submit" style={buttonStyle}>Login</button>
         </form>
