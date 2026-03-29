@@ -32,6 +32,7 @@ export default function Chat() {
   const [content, setContent] = useState('')
   const [typingNotice, setTypingNotice] = useState('')
   const clientRef = useRef(null)
+  const receiverRef = useRef('')
 
   const parseMessage = (payload) => {
     try {
@@ -53,6 +54,16 @@ export default function Chat() {
         const message = parseMessage(payload)
         console.log('Received message', message)
         setMessages((prev) => [...prev, message])
+
+        const senderId = message?.senderId || message?.from
+        const messageId = message?.id || message?.messageId
+        if (senderId && clientRef.current?.connected) {
+          clientRef.current.send(
+            '/app/chat.seen',
+            {},
+            JSON.stringify({ senderId, messageId })
+          )
+        }
       })
 
       stompClient.subscribe('/user/queue/typing', (payload) => {
@@ -61,18 +72,41 @@ export default function Chat() {
         setTypingNotice('User is typing...')
         setTimeout(() => setTypingNotice(''), 1500)
       })
+
+      stompClient.subscribe('/user/queue/seen', (payload) => {
+        const seen = parseMessage(payload)
+        console.log('Seen event', seen)
+        const seenId = seen?.messageId || seen?.id
+        if (!seenId) return
+        setMessages((prev) => prev.map((msg) => (msg.id === seenId ? { ...msg, status: 'SEEN' } : msg)))
+      })
+
+      if (receiverRef.current) {
+        stompClient.send('/app/chat.open', {}, JSON.stringify({ receiverId: receiverRef.current }))
+      }
     }, (error) => {
       console.error('WebSocket error', error)
     })
 
     return () => {
       if (clientRef.current && clientRef.current.connected) {
+        if (receiverRef.current) {
+          clientRef.current.send('/app/chat.close', {}, JSON.stringify({ receiverId: receiverRef.current }))
+        }
         clientRef.current.disconnect(() => console.log('WebSocket disconnected'))
       } else {
         socket.close()
       }
     }
   }, [])
+
+  useEffect(() => {
+    const trimmed = receiverId.trim()
+    receiverRef.current = trimmed
+    if (clientRef.current?.connected && trimmed) {
+      clientRef.current.send('/app/chat.open', {}, JSON.stringify({ receiverId: trimmed }))
+    }
+  }, [receiverId])
 
   return (
     <div style={containerStyle}>
@@ -84,7 +118,7 @@ export default function Chat() {
           {messages.length === 0 && <div style={{ color: '#9ca3af' }}>No messages yet.</div>}
           {messages.map((msg, index) => (
             <div
-              key={`${msg}-${index}`}
+              key={`${msg.id || index}`}
               style={{
                 padding: '12px 14px',
                 borderRadius: '12px',
@@ -92,7 +126,12 @@ export default function Chat() {
                 border: '1px solid rgba(255, 255, 255, 0.08)',
               }}
             >
-              {typeof msg === 'string' ? msg : JSON.stringify(msg)}
+              {typeof msg === 'string' ? msg : msg.content || JSON.stringify(msg)}
+              {msg.self && (
+                <div style={{ marginTop: '6px', fontSize: '12px', color: '#cbd5e1' }}>
+                  {msg.status === 'SEEN' ? 'SEEN ✓✓' : 'SENT ✓'}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -109,12 +148,16 @@ export default function Chat() {
             if (!receiverId.trim() || !content.trim()) {
               return
             }
+            const trimmedReceiver = receiverId.trim()
+            const trimmedContent = content.trim()
+            const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
+
             clientRef.current.send(
               '/app/chat.send',
               {},
-              JSON.stringify({ receiverId: receiverId.trim(), content: content.trim() })
+              JSON.stringify({ receiverId: trimmedReceiver, content: trimmedContent, messageId: localId })
             )
-            setMessages((prev) => [...prev, { to: receiverId.trim(), content: content.trim(), self: true }])
+            setMessages((prev) => [...prev, { id: localId, to: trimmedReceiver, content: trimmedContent, self: true, status: 'SENT' }])
             setContent('')
           }}
           style={{ marginTop: '16px', display: 'grid', gap: '10px' }}
