@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 const pageStyle = {
   minHeight: '100vh',
   padding: '32px 24px',
@@ -62,20 +64,99 @@ const actionButton = (bg, color) => ({
   boxShadow: '0 10px 24px rgba(0, 0, 0, 0.25)',
 })
 
-const incomingRequests = [
-  { id: 1, email: 'alice@example.com', status: 'PENDING' },
-  { id: 2, email: 'bob@example.com', status: 'ACCEPTED' },
-  { id: 3, email: 'carol@example.com', status: 'REJECTED' },
-]
-
-const sentRequests = [
-  { id: 11, email: 'mentor@chat.io', status: 'PENDING' },
-  { id: 12, email: 'friend@ping.me', status: 'ACCEPTED' },
-]
-
 export default function Requests() {
-  const handleAccept = (who) => alert(`Accepted request from ${who}`)
-  const handleReject = (who) => alert(`Rejected request from ${who}`)
+  const [incoming, setIncoming] = useState([])
+  const [sent, setSent] = useState([])
+  const [receiverId, setReceiverId] = useState('')
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+  useEffect(() => {
+    // TODO: Replace with real GET when backend provides it. Using mock data for now.
+    setIncoming([
+      { id: 1, email: 'alice@example.com', status: 'PENDING' },
+      { id: 2, email: 'bob@example.com', status: 'ACCEPTED' },
+      { id: 3, email: 'carol@example.com', status: 'REJECTED' },
+    ])
+
+    setSent([
+      { id: 11, email: 'mentor@chat.io', status: 'PENDING' },
+      { id: 12, email: 'friend@ping.me', status: 'ACCEPTED' },
+    ])
+  }, [])
+
+  const authHeaders = () => {
+    if (!token) {
+      alert('You must be logged in to manage requests.')
+      throw new Error('Missing token')
+    }
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    }
+  }
+
+  const handleSend = async (event) => {
+    event.preventDefault()
+    if (!receiverId.trim()) return
+
+    try {
+      const response = await fetch('http://localhost:8080/requests/send', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ receiverId: receiverId.trim() }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Send failed')
+      }
+
+      // Optimistic add to sent list
+      setSent((prev) => [
+        { id: Date.now(), email: receiverId.trim(), status: 'PENDING' },
+        ...prev,
+      ])
+      setReceiverId('')
+    } catch (error) {
+      alert('Failed to send request. Please try again.')
+    }
+  }
+
+  const handleAccept = async (requestId) => {
+    try {
+      const response = await fetch('http://localhost:8080/requests/accept', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ requestId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Accept failed')
+      }
+
+      setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'ACCEPTED' } : item)))
+    } catch (error) {
+      alert('Failed to accept request. Please try again.')
+    }
+  }
+
+  const handleReject = async (requestId) => {
+    try {
+      const response = await fetch('http://localhost:8080/requests/reject', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ requestId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Reject failed')
+      }
+
+      setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'REJECTED' } : item)))
+    } catch (error) {
+      alert('Failed to reject request. Please try again.')
+    }
+  }
 
   return (
     <div style={pageStyle}>
@@ -85,11 +166,36 @@ export default function Requests() {
           <h1 style={{ margin: '6px 0 0', fontSize: '30px', letterSpacing: '0.4px' }}>Chat Requests</h1>
         </div>
 
+        <form onSubmit={handleSend} style={{ marginBottom: '18px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <input
+            type="text"
+            placeholder="Enter email or user id to send request"
+            style={{
+              flex: 1,
+              padding: '12px 14px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(255, 255, 255, 0.06)',
+              color: '#e2e8f0',
+              fontSize: '14px',
+              outline: 'none',
+            }}
+            value={receiverId}
+            onChange={(event) => setReceiverId(event.target.value)}
+          />
+          <button
+            type="submit"
+            style={actionButton('linear-gradient(135deg, #38bdf8, #a855f7)', '#0b0b0b')}
+          >
+            Send
+          </button>
+        </form>
+
         <div style={gridStyle}>
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Incoming Requests</h3>
             <div style={{ display: 'grid', gap: '10px' }}>
-              {incomingRequests.map((item) => (
+              {incoming.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.email}</div>
@@ -102,14 +208,14 @@ export default function Requests() {
                         <button
                           type="button"
                           style={actionButton('linear-gradient(135deg, #22c55e, #16a34a)', '#0b0b0b')}
-                          onClick={() => handleAccept(item.email)}
+                          onClick={() => handleAccept(item.id)}
                         >
                           Accept
                         </button>
                         <button
                           type="button"
                           style={actionButton('linear-gradient(135deg, #fb7185, #ef4444)', '#0b0b0b')}
-                          onClick={() => handleReject(item.email)}
+                          onClick={() => handleReject(item.id)}
                         >
                           Reject
                         </button>
@@ -124,7 +230,7 @@ export default function Requests() {
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Sent Requests</h3>
             <div style={{ display: 'grid', gap: '10px' }}>
-              {sentRequests.map((item) => (
+              {sent.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.email}</div>
