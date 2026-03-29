@@ -42,6 +42,7 @@ export default function Chat() {
   const [receiverId, setReceiverId] = useState('')
   const [content, setContent] = useState('')
   const [typingNotice, setTypingNotice] = useState('')
+  const [requestStatus, setRequestStatus] = useState('PENDING')
   const clientRef = useRef(null)
   const receiverRef = useRef('')
   const fadeStyleId = 'chat-fade-keyframes'
@@ -129,142 +130,190 @@ export default function Chat() {
 
   return (
     <div style={containerStyle}>
-      <div style={cardStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div>
-            <h1 style={{ margin: '0 0 4px', fontSize: '26px' }}>Chat</h1>
-            <p style={{ margin: 0, color: '#cbd5e1' }}>Private messages and typing indicators</p>
-          </div>
+      {requestStatus === 'REJECTED' ? (
+        <div style={{
+          ...cardStyle,
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, rgba(255, 99, 132, 0.12), rgba(255, 159, 64, 0.18))',
+          color: '#ffe4e6',
+        }}>
+          <h2 style={{ margin: 0, fontSize: '24px' }}>Request declined</h2>
+          <p style={{ marginTop: '8px', color: '#ffd6a5' }}>You no longer have access to this chat.</p>
         </div>
+      ) : (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+            <div>
+              <h1 style={{ margin: '0 0 4px', fontSize: '26px' }}>Chat</h1>
+              <p style={{ margin: 0, color: '#cbd5e1' }}>Private messages and typing indicators</p>
+            </div>
+            <span style={{
+              padding: '8px 12px',
+              borderRadius: '999px',
+              fontWeight: 700,
+              fontSize: '12px',
+              letterSpacing: '0.4px',
+              background: requestStatus === 'ACCEPTED'
+                ? 'linear-gradient(135deg, #22c55e, #10b981)'
+                : 'linear-gradient(135deg, #fbbf24, #f97316)',
+              color: '#0b0b0b',
+              boxShadow: '0 10px 24px rgba(0, 0, 0, 0.25)',
+            }}>
+              {requestStatus}
+            </span>
+          </div>
 
-        <div style={listStyle}>
-          {messages.length === 0 && <div style={{ color: '#9ca3af' }}>No messages yet.</div>}
-          {messages.map((msg, index) => {
-            const isSelf = msg.self
-            return (
-              <div
-                key={`${msg.id || index}`}
-                style={{
-                  display: 'flex',
-                  justifyContent: isSelf ? 'flex-end' : 'flex-start',
-                }}
-              >
+          {requestStatus === 'PENDING' && (
+            <div style={{
+              marginTop: '18px',
+              padding: '16px',
+              borderRadius: '14px',
+              border: '1px dashed rgba(255, 255, 255, 0.25)',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02))',
+              textAlign: 'center',
+              color: '#fef3c7',
+            }}>
+              Waiting for user to accept request...
+            </div>
+          )}
+
+          <div style={listStyle}>
+            {messages.length === 0 && <div style={{ color: '#9ca3af' }}>No messages yet.</div>}
+            {messages.map((msg, index) => {
+              const isSelf = msg.self
+              return (
                 <div
+                  key={`${msg.id || index}`}
                   style={{
-                    maxWidth: '70%',
-                    padding: '12px 14px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    background: isSelf
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.8), rgba(168, 85, 247, 0.85))'
-                      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.85))',
-                    color: '#f8fafc',
-                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
-                    animation: 'messageFade 0.35s ease',
-                    whiteSpace: 'pre-wrap',
+                    display: 'flex',
+                    justifyContent: isSelf ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  {typeof msg === 'string' ? msg : msg.content || JSON.stringify(msg)}
-                  {msg.self && (
-                    <div style={{ marginTop: '6px', fontSize: '12px', color: '#e2e8f0', textAlign: 'right' }}>
-                      {msg.status === 'SEEN' ? 'SEEN ✓✓' : 'SENT ✓'}
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      maxWidth: '70%',
+                      padding: '12px 14px',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: isSelf
+                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.8), rgba(168, 85, 247, 0.85))'
+                        : 'linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.85))',
+                      color: '#f8fafc',
+                      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
+                      animation: 'messageFade 0.35s ease',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {typeof msg === 'string' ? msg : msg.content || JSON.stringify(msg)}
+                    {msg.self && (
+                      <div style={{ marginTop: '6px', fontSize: '12px', color: '#e2e8f0', textAlign: 'right' }}>
+                        {msg.status === 'SEEN' ? 'SEEN ✓✓' : 'SENT ✓'}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
 
-        {typingNotice && <p style={{ marginTop: '8px', color: '#a855f7' }}>{typingNotice}</p>}
+          {typingNotice && <p style={{ marginTop: '8px', color: '#a855f7' }}>{typingNotice}</p>}
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (!clientRef.current || !clientRef.current.connected) {
-              alert('Not connected to chat yet.')
-              return
-            }
-            if (!receiverId.trim() || !content.trim()) {
-              return
-            }
-            const trimmedReceiver = receiverId.trim()
-            const trimmedContent = content.trim()
-            const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (requestStatus !== 'ACCEPTED') {
+                return
+              }
+              if (!clientRef.current || !clientRef.current.connected) {
+                alert('Not connected to chat yet.')
+                return
+              }
+              if (!receiverId.trim() || !content.trim()) {
+                return
+              }
+              const trimmedReceiver = receiverId.trim()
+              const trimmedContent = content.trim()
+              const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
 
-            clientRef.current.send(
-              '/app/chat.send',
-              {},
-              JSON.stringify({ receiverId: trimmedReceiver, content: trimmedContent, messageId: localId })
-            )
-            setMessages((prev) => [...prev, { id: localId, to: trimmedReceiver, content: trimmedContent, self: true, status: 'SENT' }])
-            setContent('')
-          }}
-          style={{
-            marginTop: '14px',
-            display: 'grid',
-            gap: '10px',
-          }}
-        >
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <input
-              type="text"
-              placeholder="Receiver ID"
-              value={receiverId}
-              onChange={(event) => setReceiverId(event.target.value)}
+              clientRef.current.send(
+                '/app/chat.send',
+                {},
+                JSON.stringify({ receiverId: trimmedReceiver, content: trimmedContent, messageId: localId })
+              )
+              setMessages((prev) => [...prev, { id: localId, to: trimmedReceiver, content: trimmedContent, self: true, status: 'SENT' }])
+              setContent('')
+            }}
+            style={{
+              marginTop: '14px',
+              display: 'grid',
+              gap: '10px',
+              opacity: requestStatus === 'ACCEPTED' ? 1 : 0.5,
+              pointerEvents: requestStatus === 'ACCEPTED' ? 'auto' : 'none',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Receiver ID"
+                value={receiverId}
+                onChange={(event) => setReceiverId(event.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: '#e5e7eb',
+                  outline: 'none',
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #38bdf8, #fb7185)',
+                  color: '#0b0b0b',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                Send
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              placeholder="Type a message..."
+              value={content}
+              onChange={(event) => {
+                const next = event.target.value
+                setContent(next)
+                if (requestStatus !== 'ACCEPTED') return
+                if (clientRef.current && clientRef.current.connected && receiverId.trim()) {
+                  clientRef.current.send(
+                    '/app/chat.typing',
+                    {},
+                    JSON.stringify({ receiverId: receiverId.trim(), typing: true })
+                  )
+                }
+              }}
               style={{
-                flex: 1,
                 padding: '12px 14px',
                 borderRadius: '14px',
                 border: '1px solid rgba(255, 255, 255, 0.16)',
                 background: 'rgba(255, 255, 255, 0.06)',
                 color: '#e5e7eb',
                 outline: 'none',
+                resize: 'vertical',
               }}
             />
-            <button
-              type="submit"
-              style={{
-                padding: '12px 16px',
-                borderRadius: '14px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #38bdf8, #fb7185)',
-                color: '#0b0b0b',
-                fontWeight: 800,
-                cursor: 'pointer',
-                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.3)',
-              }}
-            >
-              Send
-            </button>
-          </div>
-          <textarea
-            rows={3}
-            placeholder="Type a message..."
-            value={content}
-            onChange={(event) => {
-              const next = event.target.value
-              setContent(next)
-              if (clientRef.current && clientRef.current.connected && receiverId.trim()) {
-                clientRef.current.send(
-                  '/app/chat.typing',
-                  {},
-                  JSON.stringify({ receiverId: receiverId.trim(), typing: true })
-                )
-              }
-            }}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: '#e5e7eb',
-              outline: 'none',
-              resize: 'vertical',
-            }}
-          />
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
