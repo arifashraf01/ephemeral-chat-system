@@ -66,6 +66,7 @@ export default function Signup() {
 
     if (step === 1) {
       try {
+        console.log('Sending OTP for email:', email)
         const response = await fetch('http://localhost:8080/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,7 +74,10 @@ export default function Signup() {
         })
 
         if (!response.ok) {
-          throw new Error('OTP request failed')
+          const text = await response.text()
+          console.log('BACKEND ERROR:', text)
+          alert(text)
+          return
         }
 
         setStep(2)

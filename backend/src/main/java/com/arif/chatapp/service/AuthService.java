@@ -25,8 +25,9 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public void sendOtp(String email) {
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        userRepository.findByEmail(email).ifPresent(user -> {
+            throw new IllegalArgumentException("User already exists");
+        });
 
         String otpCode = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
         Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
