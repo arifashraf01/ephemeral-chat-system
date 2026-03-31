@@ -19,4 +19,6 @@ public interface ChatRequestRepository extends JpaRepository<ChatRequest, Long> 
 	);
 
 	List<ChatRequest> findByReceiver(User receiver);
+
+	List<ChatRequest> findBySender(User sender);
 }

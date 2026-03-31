@@ -1,5 +1,6 @@
 package com.arif.chatapp.service;
 
+import com.arif.chatapp.dto.ChatRequestResponse;
 import com.arif.chatapp.model.ChatRequest;
 import com.arif.chatapp.model.User;
 import com.arif.chatapp.repository.ChatRequestRepository;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -80,5 +82,34 @@ public class ChatRequestService {
 
         request.setStatus(ChatRequest.Status.REJECTED);
         chatRequestRepository.save(request);
+    }
+
+    public List<ChatRequestResponse> getIncomingRequests(String currentUserEmail) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return chatRequestRepository.findByReceiver(currentUser)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public List<ChatRequestResponse> getSentRequests(String currentUserEmail) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return chatRequestRepository.findBySender(currentUser)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private ChatRequestResponse toResponse(ChatRequest request) {
+        return new ChatRequestResponse(
+                request.getId(),
+                request.getSender().getEmail(),
+                request.getReceiver().getEmail(),
+                request.getStatus()
+        );
     }
 }

@@ -71,20 +71,6 @@ export default function Requests() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
-  useEffect(() => {
-    // TODO: Replace with real GET when backend provides it. Using mock data for now.
-    setIncoming([
-      { id: 1, email: 'alice@example.com', status: 'PENDING' },
-      { id: 2, email: 'bob@example.com', status: 'ACCEPTED' },
-      { id: 3, email: 'carol@example.com', status: 'REJECTED' },
-    ])
-
-    setSent([
-      { id: 11, email: 'mentor@chat.io', status: 'PENDING' },
-      { id: 12, email: 'friend@ping.me', status: 'ACCEPTED' },
-    ])
-  }, [])
-
   const authHeaders = () => {
     if (!token) {
       alert('You must be logged in to manage requests.')
@@ -95,6 +81,37 @@ export default function Requests() {
       Authorization: `Bearer ${token}`,
     }
   }
+
+  const fetchRequests = async () => {
+    try {
+      const [incomingResponse, sentResponse] = await Promise.all([
+        fetch('http://localhost:8080/requests/incoming', {
+          method: 'GET',
+          headers: authHeaders(),
+        }),
+        fetch('http://localhost:8080/requests/sent', {
+          method: 'GET',
+          headers: authHeaders(),
+        }),
+      ])
+
+      if (!incomingResponse.ok || !sentResponse.ok) {
+        throw new Error('Failed to fetch requests')
+      }
+
+      const incomingData = await incomingResponse.json()
+      const sentData = await sentResponse.json()
+
+      setIncoming(incomingData)
+      setSent(sentData)
+    } catch (error) {
+      alert('Failed to load requests.')
+    }
+  }
+
+  useEffect(() => {
+    fetchRequests()
+  }, [])
 
   const handleSend = async (event) => {
     event.preventDefault()
@@ -115,10 +132,7 @@ export default function Requests() {
       }
 
       // Optimistic add to sent list
-      setSent((prev) => [
-        { id: Date.now(), email: receiverEmail.trim(), status: 'PENDING' },
-        ...prev,
-      ])
+      await fetchRequests()
       setReceiverEmail('')
       alert(data?.message || 'Request sent')
     } catch (error) {
@@ -202,7 +216,7 @@ export default function Requests() {
               {incoming.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.email}</div>
+                    <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.senderEmail}</div>
                     <div style={{ marginTop: '4px', fontSize: '13px', color: '#cbd5e1' }}>Incoming</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -237,7 +251,7 @@ export default function Requests() {
               {sent.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.email}</div>
+                    <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.receiverEmail}</div>
                     <div style={{ marginTop: '4px', fontSize: '13px', color: '#cbd5e1' }}>Sent</div>
                   </div>
                   <span style={statusStyles[item.status]}>{item.status}</span>
