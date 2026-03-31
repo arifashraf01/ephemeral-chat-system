@@ -5,31 +5,39 @@ import com.arif.chatapp.model.User;
 import com.arif.chatapp.repository.ChatRequestRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatRequestService {
 
     private final UserRepository userRepository;
     private final ChatRequestRepository chatRequestRepository;
 
-    public void sendRequest(Long senderId, Long receiverId) {
-        if (senderId.equals(receiverId)) {
+        public void sendRequest(String senderEmail, String receiverEmail) {
+        User sender = userRepository.findByEmail(senderEmail)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        User receiver = userRepository.findByEmail(receiverEmail)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (sender.getId().equals(receiver.getId())) {
             throw new IllegalArgumentException("Cannot send request to yourself");
         }
 
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
-
-        chatRequestRepository.findBySenderAndReceiver(sender, receiver)
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Request already exists");
-                });
+        boolean exists = chatRequestRepository.existsBySenderAndReceiverOrSenderAndReceiver(
+            sender,
+            receiver,
+            receiver,
+            sender
+        );
+        if (exists) {
+            throw new IllegalArgumentException("Request already exists");
+        }
 
         ChatRequest request = ChatRequest.builder()
                 .sender(sender)
@@ -39,6 +47,7 @@ public class ChatRequestService {
                 .build();
 
         chatRequestRepository.save(request);
+        log.info("Chat request created: sender={} receiver={} status=PENDING", senderEmail, receiverEmail);
     }
 
     public void acceptRequest(Long requestId, Long userId) {

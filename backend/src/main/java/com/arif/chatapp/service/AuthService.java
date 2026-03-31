@@ -6,6 +6,7 @@ import com.arif.chatapp.repository.OtpRepository;
 import com.arif.chatapp.repository.UserRepository;
 import com.arif.chatapp.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -63,12 +65,16 @@ public class AuthService {
     }
 
     public String login(String email, String password) {
+        log.info("Login attempt for email={}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            log.warn("Login failed for email={} due to invalid password", email);
             throw new IllegalArgumentException("Invalid credentials");
         }
+
+        log.info("Login successful for email={}", email);
 
         return jwtUtil.generateToken(email);
     }

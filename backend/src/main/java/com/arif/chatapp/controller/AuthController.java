@@ -1,5 +1,6 @@
 package com.arif.chatapp.controller;
 
+import com.arif.chatapp.dto.LoginRequest;
 import com.arif.chatapp.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,11 +32,12 @@ public class AuthController {
         authService.verifyOtp(request.getEmail(), request.getOtp(), request.getPassword());
     }
 
-    @PostMapping("/login")
-    public String login(@Valid @RequestBody LoginRequest request) {
-        log.debug("Login request received DTO: email='{}', passwordLength={}", request.getEmail(),
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public java.util.Map<String, String> login(@Valid @RequestBody LoginRequest request) {
+        log.info("Login request received: email='{}', passwordLength={}", request.getEmail(),
                 request.getPassword() == null ? 0 : request.getPassword().length());
-        return authService.login(request.getEmail(), request.getPassword());
+        String token = authService.login(request.getEmail(), request.getPassword());
+        return java.util.Map.of("token", token);
     }
 
     /**
@@ -42,14 +45,15 @@ public class AuthController {
      * Send JSON: { "email": "...", "password": "..." }
      */
     @PostMapping("/login-debug")
-    public String loginDebug(@RequestBody java.util.Map<String, String> body) {
+    public java.util.Map<String, String> loginDebug(@RequestBody java.util.Map<String, String> body) {
         String email = body.get("email");
         String password = body.get("password");
-        log.debug("Login DEBUG body: {}", body);
+        log.info("Login DEBUG body: {}", body);
         if (email == null || password == null) {
             throw new IllegalArgumentException("Missing email or password");
         }
-        return authService.login(email, password);
+        String token = authService.login(email, password);
+        return java.util.Map.of("token", token);
     }
 
     @Data
@@ -72,13 +76,4 @@ public class AuthController {
         private String password;
     }
 
-    @Data
-    private static class LoginRequest {
-        @Email
-        @NotBlank
-        private String email;
-
-        @NotBlank
-        private String password;
-    }
 }

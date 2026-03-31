@@ -67,7 +67,7 @@ const actionButton = (bg, color) => ({
 export default function Requests() {
   const [incoming, setIncoming] = useState([])
   const [sent, setSent] = useState([])
-  const [receiverId, setReceiverId] = useState('')
+  const [receiverEmail, setReceiverEmail] = useState('')
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
@@ -98,25 +98,29 @@ export default function Requests() {
 
   const handleSend = async (event) => {
     event.preventDefault()
-    if (!receiverId.trim()) return
+    if (!receiverEmail.trim()) return
 
     try {
       const response = await fetch('http://localhost:8080/requests/send', {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ receiverId: receiverId.trim() }),
+        body: JSON.stringify({ receiverEmail: receiverEmail.trim() }),
       })
 
+      const data = await response.json().catch(() => null)
+
       if (!response.ok) {
-        throw new Error('Send failed')
+        alert(data?.message || 'Failed to send request.')
+        return
       }
 
       // Optimistic add to sent list
       setSent((prev) => [
-        { id: Date.now(), email: receiverId.trim(), status: 'PENDING' },
+        { id: Date.now(), email: receiverEmail.trim(), status: 'PENDING' },
         ...prev,
       ])
-      setReceiverId('')
+      setReceiverEmail('')
+      alert(data?.message || 'Request sent')
     } catch (error) {
       alert('Failed to send request. Please try again.')
     }
@@ -169,7 +173,7 @@ export default function Requests() {
         <form onSubmit={handleSend} style={{ marginBottom: '18px', display: 'flex', gap: '10px', alignItems: 'center' }}>
           <input
             type="text"
-            placeholder="Enter email or user id to send request"
+            placeholder="Enter receiver email"
             style={{
               flex: 1,
               padding: '12px 14px',
@@ -180,8 +184,8 @@ export default function Requests() {
               fontSize: '14px',
               outline: 'none',
             }}
-            value={receiverId}
-            onChange={(event) => setReceiverId(event.target.value)}
+            value={receiverEmail}
+            onChange={(event) => setReceiverEmail(event.target.value)}
           />
           <button
             type="submit"
