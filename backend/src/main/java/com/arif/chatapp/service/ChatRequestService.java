@@ -52,11 +52,14 @@ public class ChatRequestService {
         log.info("Chat request created: sender={} receiver={} status=PENDING", senderEmail, receiverEmail);
     }
 
-    public void acceptRequest(Long requestId, Long userId) {
+    public void acceptRequest(Long requestId, String currentUserEmail) {
         ChatRequest request = chatRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found"));
 
-        if (!request.getReceiver().getId().equals(userId)) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!request.getReceiver().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("Only receiver can accept the request");
         }
 
@@ -68,11 +71,14 @@ public class ChatRequestService {
         chatRequestRepository.save(request);
     }
 
-    public void rejectRequest(Long requestId, Long userId) {
+    public void rejectRequest(Long requestId, String currentUserEmail) {
         ChatRequest request = chatRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found"));
 
-        if (!request.getReceiver().getId().equals(userId)) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!request.getReceiver().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("Only receiver can reject the request");
         }
 

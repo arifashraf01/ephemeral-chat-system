@@ -58,12 +58,30 @@ public class ChatRequestController {
     }
 
     @PostMapping("/requests/accept")
-    public void accept(@RequestParam Long requestId, @RequestParam Long userId) {
-        chatRequestService.acceptRequest(requestId, userId);
+    public ResponseEntity<ApiResponse<Object>> accept(@RequestParam Long requestId, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
+        }
+        chatRequestService.acceptRequest(requestId, authentication.getName());
+        ApiResponse<Object> response = ApiResponse.builder()
+                .success(true)
+                .message("Request accepted")
+                .data(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/requests/reject")
-    public void reject(@RequestParam Long requestId, @RequestParam Long userId) {
-        chatRequestService.rejectRequest(requestId, userId);
+    public ResponseEntity<ApiResponse<Object>> reject(@RequestParam Long requestId, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
+        }
+        chatRequestService.rejectRequest(requestId, authentication.getName());
+        ApiResponse<Object> response = ApiResponse.builder()
+                .success(true)
+                .message("Request rejected")
+                .data(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }
