@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -30,7 +32,24 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(@Valid @RequestBody LoginRequest request) {
+        log.debug("Login request received DTO: email='{}', passwordLength={}", request.getEmail(),
+                request.getPassword() == null ? 0 : request.getPassword().length());
         return authService.login(request.getEmail(), request.getPassword());
+    }
+
+    /**
+     * Temporary debug helper to verify request binding without DTO validation.
+     * Send JSON: { "email": "...", "password": "..." }
+     */
+    @PostMapping("/login-debug")
+    public String loginDebug(@RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        String password = body.get("password");
+        log.debug("Login DEBUG body: {}", body);
+        if (email == null || password == null) {
+            throw new IllegalArgumentException("Missing email or password");
+        }
+        return authService.login(email, password);
     }
 
     @Data
