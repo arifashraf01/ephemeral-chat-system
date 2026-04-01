@@ -1,8 +1,11 @@
 package com.arif.chatapp.service;
 
+import com.arif.chatapp.dto.ChatSummaryResponse;
 import com.arif.chatapp.dto.ChatRequestResponse;
+import com.arif.chatapp.model.Chat;
 import com.arif.chatapp.model.ChatRequest;
 import com.arif.chatapp.model.User;
+import com.arif.chatapp.repository.ChatRepository;
 import com.arif.chatapp.repository.ChatRequestRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,23 +22,24 @@ public class ChatRequestService {
 
     private final UserRepository userRepository;
     private final ChatRequestRepository chatRequestRepository;
+    private final ChatRepository chatRepository;
 
-        public void sendRequest(String senderEmail, String receiverEmail) {
+    public void sendRequest(String senderEmail, String receiverEmail) {
         User sender = userRepository.findByEmail(senderEmail)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         User receiver = userRepository.findByEmail(receiverEmail)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (sender.getId().equals(receiver.getId())) {
             throw new IllegalArgumentException("Cannot send request to yourself");
         }
 
         boolean exists = chatRequestRepository.existsBySenderAndReceiverOrSenderAndReceiver(
-            sender,
-            receiver,
-            receiver,
-            sender
+                sender,
+                receiver,
+                receiver,
+                sender
         );
         if (exists) {
             throw new IllegalArgumentException("Request already exists");
@@ -69,6 +73,21 @@ public class ChatRequestService {
 
         request.setStatus(ChatRequest.Status.ACCEPTED);
         chatRequestRepository.save(request);
+
+        boolean chatExists = chatRepository.existsByUser1AndUser2OrUser1AndUser2(
+                request.getSender(),
+                request.getReceiver(),
+                request.getReceiver(),
+                request.getSender()
+        );
+
+        if (!chatExists) {
+            Chat chat = Chat.builder()
+                    .user1(request.getSender())
+                    .user2(request.getReceiver())
+                    .build();
+            chatRepository.save(chat);
+        }
     }
 
     public void rejectRequest(Long requestId, String currentUserEmail) {
@@ -117,5 +136,20 @@ public class ChatRequestService {
                 request.getReceiver().getEmail(),
                 request.getStatus()
         );
+    }
+
+    public List<ChatSummaryResponse> getChatsForUser(String currentUserEmail) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return chatRepository.findByUser1OrUser2(currentUser, currentUser)
+                .stream()
+                .map(chat -> new ChatSummaryResponse(
+                        chat.getId(),
+                        chat.getUser1().getEmail(),
+                        chat.getUser2().getEmail(),
+                        chat.getCreatedAt()
+                ))
+                .toList();
     }
 }

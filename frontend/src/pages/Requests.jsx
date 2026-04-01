@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -68,6 +69,7 @@ export default function Requests() {
   const [incoming, setIncoming] = useState([])
   const [sent, setSent] = useState([])
   const [receiverEmail, setReceiverEmail] = useState('')
+  const navigate = useNavigate()
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
@@ -142,10 +144,9 @@ export default function Requests() {
 
   const handleAccept = async (requestId) => {
     try {
-      const response = await fetch('http://localhost:8080/requests/accept', {
+      const response = await fetch(`http://localhost:8080/requests/accept?requestId=${requestId}`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ requestId }),
       })
 
       if (!response.ok) {
@@ -160,10 +161,9 @@ export default function Requests() {
 
   const handleReject = async (requestId) => {
     try {
-      const response = await fetch('http://localhost:8080/requests/reject', {
+      const response = await fetch(`http://localhost:8080/requests/reject?requestId=${requestId}`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ requestId }),
       })
 
       if (!response.ok) {
@@ -239,6 +239,15 @@ export default function Requests() {
                         </button>
                       </div>
                     )}
+                    {item.status === 'ACCEPTED' && (
+                      <button
+                        type="button"
+                        style={actionButton('linear-gradient(135deg, #38bdf8, #22c55e)', '#0b0b0b')}
+                        onClick={() => navigate('/chat')}
+                      >
+                        Chat
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -254,7 +263,17 @@ export default function Requests() {
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.receiverEmail}</div>
                     <div style={{ marginTop: '4px', fontSize: '13px', color: '#cbd5e1' }}>Sent</div>
                   </div>
-                  <span style={statusStyles[item.status]}>{item.status}</span>
+                  {item.status === 'ACCEPTED' ? (
+                    <button
+                      type="button"
+                      style={actionButton('linear-gradient(135deg, #38bdf8, #22c55e)', '#0b0b0b')}
+                      onClick={() => navigate('/chat')}
+                    >
+                      Chat
+                    </button>
+                  ) : (
+                    <span style={statusStyles[item.status]}>{item.status}</span>
+                  )}
                 </div>
               ))}
             </div>

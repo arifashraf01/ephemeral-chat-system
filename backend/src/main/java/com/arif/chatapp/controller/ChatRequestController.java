@@ -2,6 +2,7 @@ package com.arif.chatapp.controller;
 
 import com.arif.chatapp.dto.ApiResponse;
 import com.arif.chatapp.dto.ChatRequestResponse;
+import com.arif.chatapp.dto.ChatSummaryResponse;
 import com.arif.chatapp.dto.SendChatRequestRequest;
 import com.arif.chatapp.service.ChatRequestService;
 import jakarta.validation.Valid;
@@ -55,6 +56,14 @@ public class ChatRequestController {
             throw new IllegalArgumentException("Authorization header is required");
         }
         return chatRequestService.getSentRequests(authentication.getName());
+    }
+
+    @GetMapping("/chats")
+    public List<ChatSummaryResponse> chats(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
+        }
+        return chatRequestService.getChatsForUser(authentication.getName());
     }
 
     @PostMapping("/requests/accept")
