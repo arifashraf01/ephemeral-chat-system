@@ -238,9 +238,6 @@ export default function Chat() {
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            if (!hasChat) {
-              return
-            }
             if (!clientRef.current || !clientRef.current.connected) {
               alert('Not connected to chat yet.')
               return
@@ -264,8 +261,8 @@ export default function Chat() {
             marginTop: '14px',
             display: 'grid',
             gap: '10px',
-            opacity: hasChat ? 1 : 0.5,
-            pointerEvents: hasChat ? 'auto' : 'none',
+            opacity: 1,
+            pointerEvents: 'auto',
           }}
         >
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -307,7 +304,6 @@ export default function Chat() {
               onChange={(event) => {
                 const next = event.target.value
                 setContent(next)
-                if (!hasChat) return
                 if (clientRef.current && clientRef.current.connected && receiverId.trim()) {
                   clientRef.current.send(
                     '/app/chat.typing',

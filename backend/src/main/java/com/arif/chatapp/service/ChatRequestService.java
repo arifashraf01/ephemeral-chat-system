@@ -74,20 +74,16 @@ public class ChatRequestService {
         request.setStatus(ChatRequest.Status.ACCEPTED);
         chatRequestRepository.save(request);
 
-        boolean chatExists = chatRepository.existsByUser1AndUser2OrUser1AndUser2(
-                request.getSender(),
-                request.getReceiver(),
-                request.getReceiver(),
-                request.getSender()
-        );
+        User sender = request.getSender();
+        User receiver = request.getReceiver();
 
-        if (!chatExists) {
-            Chat chat = Chat.builder()
-                    .user1(request.getSender())
-                    .user2(request.getReceiver())
-                    .build();
-            chatRepository.save(chat);
-        }
+        Chat chat = Chat.builder()
+                .user1(sender)
+                .user2(receiver)
+                .build();
+        chatRepository.save(chat);
+
+        log.info("Chat created between {} and {}", sender.getEmail(), receiver.getEmail());
     }
 
     public void rejectRequest(Long requestId, String currentUserEmail) {
@@ -141,6 +137,33 @@ public class ChatRequestService {
     public List<ChatSummaryResponse> getChatsForUser(String currentUserEmail) {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Backfill chats for requests that were accepted before chat creation logic was added.
+        List<ChatRequest> acceptedRequests = chatRequestRepository.findBySenderAndStatusOrReceiverAndStatus(
+                currentUser,
+                ChatRequest.Status.ACCEPTED,
+                currentUser,
+                ChatRequest.Status.ACCEPTED
+        );
+
+        for (ChatRequest acceptedRequest : acceptedRequests) {
+            User sender = acceptedRequest.getSender();
+            User receiver = acceptedRequest.getReceiver();
+            boolean exists = chatRepository.existsByUser1AndUser2OrUser1AndUser2(
+                    sender,
+                    receiver,
+                    receiver,
+                    sender
+            );
+            if (!exists) {
+                Chat chat = Chat.builder()
+                        .user1(sender)
+                        .user2(receiver)
+                        .build();
+                chatRepository.save(chat);
+                log.info("Backfilled chat between {} and {}", sender.getEmail(), receiver.getEmail());
+            }
+        }
 
         return chatRepository.findByUser1OrUser2(currentUser, currentUser)
                 .stream()
