@@ -3,6 +3,7 @@ package com.arif.chatapp.service;
 import com.arif.chatapp.model.ChatRequest;
 import com.arif.chatapp.model.Message;
 import com.arif.chatapp.model.User;
+import com.arif.chatapp.repository.ChatRepository;
 import com.arif.chatapp.repository.ChatRequestRepository;
 import com.arif.chatapp.repository.MessageRepository;
 import com.arif.chatapp.repository.UserRepository;
@@ -20,6 +21,41 @@ public class MessageService {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final ChatRequestRepository chatRequestRepository;
+    private final ChatRepository chatRepository;
+
+    public Message sendMessageByEmail(String senderEmail, String receiverEmail, String content) {
+        User sender = userRepository.findByEmail(senderEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+        User receiver = userRepository.findByEmail(receiverEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+
+        boolean chatExists = chatRepository.existsByUser1AndUser2OrUser1AndUser2(
+                sender,
+                receiver,
+                receiver,
+                sender
+        );
+
+        boolean acceptedRequest = chatRequestRepository.findBySenderAndReceiver(sender, receiver)
+                .filter(request -> request.getStatus() == ChatRequest.Status.ACCEPTED)
+                .isPresent()
+                || chatRequestRepository.findBySenderAndReceiver(receiver, sender)
+                .filter(request -> request.getStatus() == ChatRequest.Status.ACCEPTED)
+                .isPresent();
+
+        if (!chatExists && !acceptedRequest) {
+            throw new IllegalStateException("Chat not allowed");
+        }
+
+        Message message = Message.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .content(content)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return messageRepository.save(message);
+    }
 
     public Message sendMessage(Long senderId, Long receiverId, String content) {
         User sender = userRepository.findById(senderId)

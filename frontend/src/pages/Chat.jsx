@@ -40,13 +40,22 @@ const listStyle = {
 export default function Chat() {
   const [messages, setMessages] = useState([])
   const [chats, setChats] = useState([])
-  const [receiverId, setReceiverId] = useState('')
+  const [partnerEmail, setPartnerEmail] = useState('')
   const [content, setContent] = useState('')
   const [typingNotice, setTypingNotice] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
   const clientRef = useRef(null)
-  const receiverRef = useRef('')
   const fadeStyleId = 'chat-fade-keyframes'
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  const currentEmail = (() => {
+    try {
+      if (!token) return ''
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      return payload?.sub || ''
+    } catch {
+      return ''
+    }
+  })()
   const hasChat = chats.length > 0
 
   const parseMessage = (payload) => {
@@ -73,7 +82,14 @@ export default function Chat() {
       }
 
       const data = await response.json()
-      setChats(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : []
+      setChats(list)
+
+      if (list.length > 0 && currentEmail) {
+        const first = list[0]
+        const nextPartner = first.user1Email === currentEmail ? first.user2Email : first.user1Email
+        setPartnerEmail(nextPartner || '')
+      }
     } catch (error) {
       console.error('Failed to fetch chats', error)
       setChats([])
@@ -94,67 +110,58 @@ export default function Chat() {
 
     const socket = new SockJS('http://localhost:8080/ws')
     const stompClient = over(socket)
+    stompClient.debug = () => {}
     clientRef.current = stompClient
 
     stompClient.connect({}, () => {
       console.log('WebSocket connected')
-      stompClient.subscribe('/user/queue/messages', (payload) => {
+      setIsConnected(true)
+      if (!currentEmail) return
+
+      stompClient.subscribe(`/topic/messages/${currentEmail}`, (payload) => {
         const message = parseMessage(payload)
         console.log('Received message', message)
         setMessages((prev) => [...prev, message])
 
-        const senderId = message?.senderId || message?.from
+        const senderEmail = message?.sender?.email || message?.senderEmail
         const messageId = message?.id || message?.messageId
-        if (senderId && clientRef.current?.connected) {
+        if (senderEmail && clientRef.current?.connected) {
           clientRef.current.send(
             '/app/chat.seen',
             {},
-            JSON.stringify({ senderId, messageId })
+            JSON.stringify({ senderEmail, messageId })
           )
         }
       })
 
-      stompClient.subscribe('/user/queue/typing', (payload) => {
+      stompClient.subscribe(`/topic/typing/${currentEmail}`, (payload) => {
         const message = parseMessage(payload)
         console.log('Typing event', message)
         setTypingNotice('User is typing...')
         setTimeout(() => setTypingNotice(''), 1500)
       })
 
-      stompClient.subscribe('/user/queue/seen', (payload) => {
+      stompClient.subscribe(`/topic/seen/${currentEmail}`, (payload) => {
         const seen = parseMessage(payload)
         console.log('Seen event', seen)
         const seenId = seen?.messageId || seen?.id
         if (!seenId) return
         setMessages((prev) => prev.map((msg) => (msg.id === seenId ? { ...msg, status: 'SEEN' } : msg)))
       })
-
-      if (receiverRef.current) {
-        stompClient.send('/app/chat.open', {}, JSON.stringify({ receiverId: receiverRef.current }))
-      }
     }, (error) => {
+      setIsConnected(false)
       console.error('WebSocket error', error)
     })
 
     return () => {
       if (clientRef.current && clientRef.current.connected) {
-        if (receiverRef.current) {
-          clientRef.current.send('/app/chat.close', {}, JSON.stringify({ receiverId: receiverRef.current }))
-        }
         clientRef.current.disconnect(() => console.log('WebSocket disconnected'))
       } else {
         socket.close()
       }
+      setIsConnected(false)
     }
   }, [])
-
-  useEffect(() => {
-    const trimmed = receiverId.trim()
-    receiverRef.current = trimmed
-    if (clientRef.current?.connected && trimmed) {
-      clientRef.current.send('/app/chat.open', {}, JSON.stringify({ receiverId: trimmed }))
-    }
-  }, [receiverId])
 
   return (
     <div style={containerStyle}>
@@ -176,7 +183,7 @@ export default function Chat() {
             color: '#0b0b0b',
             boxShadow: '0 10px 24px rgba(0, 0, 0, 0.25)',
           }}>
-            {hasChat ? 'CHAT ACTIVE' : 'NO CHAT FOUND'}
+            {hasChat ? (isConnected ? 'CHAT ACTIVE' : 'CONNECTING...') : 'NO CHAT FOUND'}
           </span>
         </div>
 
@@ -238,23 +245,21 @@ export default function Chat() {
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            if (!clientRef.current || !clientRef.current.connected) {
-              alert('Not connected to chat yet.')
+            if (!clientRef.current || !clientRef.current.connected || !isConnected) {
               return
             }
-            if (!receiverId.trim() || !content.trim()) {
+            if (!partnerEmail || !content.trim() || !currentEmail) {
               return
             }
-            const trimmedReceiver = receiverId.trim()
             const trimmedContent = content.trim()
             const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
 
             clientRef.current.send(
               '/app/chat.send',
               {},
-              JSON.stringify({ receiverId: trimmedReceiver, content: trimmedContent, messageId: localId })
+              JSON.stringify({ senderEmail: currentEmail, receiverEmail: partnerEmail, content: trimmedContent, messageId: localId })
             )
-            setMessages((prev) => [...prev, { id: localId, to: trimmedReceiver, content: trimmedContent, self: true, status: 'SENT' }])
+            setMessages((prev) => [...prev, { id: localId, content: trimmedContent, self: true, status: 'SENT' }])
             setContent('')
           }}
           style={{
@@ -266,11 +271,7 @@ export default function Chat() {
           }}
         >
             <div style={{ display: 'flex', gap: '10px' }}>
-              <input
-                type="text"
-                placeholder="Receiver ID"
-                value={receiverId}
-                onChange={(event) => setReceiverId(event.target.value)}
+              <div
                 style={{
                   flex: 1,
                   padding: '12px 14px',
@@ -278,9 +279,10 @@ export default function Chat() {
                   border: '1px solid rgba(255, 255, 255, 0.16)',
                   background: 'rgba(255, 255, 255, 0.06)',
                   color: '#e5e7eb',
-                  outline: 'none',
                 }}
-              />
+              >
+                {partnerEmail || 'No chat partner selected'}
+              </div>
               <button
                 type="submit"
                 style={{
@@ -292,7 +294,9 @@ export default function Chat() {
                   fontWeight: 800,
                   cursor: 'pointer',
                   boxShadow: '0 12px 30px rgba(0, 0, 0, 0.3)',
+                  opacity: isConnected && hasChat ? 1 : 0.6,
                 }}
+                disabled={!isConnected || !hasChat || !partnerEmail}
               >
                 Send
               </button>
@@ -304,11 +308,11 @@ export default function Chat() {
               onChange={(event) => {
                 const next = event.target.value
                 setContent(next)
-                if (clientRef.current && clientRef.current.connected && receiverId.trim()) {
+                if (clientRef.current && clientRef.current.connected && isConnected && partnerEmail && currentEmail) {
                   clientRef.current.send(
                     '/app/chat.typing',
                     {},
-                    JSON.stringify({ receiverId: receiverId.trim(), typing: true })
+                    JSON.stringify({ senderEmail: currentEmail, receiverEmail: partnerEmail, typing: true })
                   )
                 }
               }}

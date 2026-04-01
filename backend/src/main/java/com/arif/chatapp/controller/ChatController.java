@@ -18,30 +18,28 @@ public class ChatController {
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@MessageMapping("/chat.send")
-	public Message sendMessage(@Payload Message message) {
-		Message saved = messageService.sendMessage(
-				message.getSender().getId(),
-				message.getReceiver().getId(),
-				message.getContent()
+	public Message sendMessage(@Payload ChatMessagePayload payload) {
+		if (payload == null || payload.getSenderEmail() == null || payload.getReceiverEmail() == null || payload.getContent() == null) {
+			throw new IllegalArgumentException("Invalid chat payload");
+		}
+
+		Message saved = messageService.sendMessageByEmail(
+				payload.getSenderEmail(),
+				payload.getReceiverEmail(),
+				payload.getContent()
 		);
-		messagingTemplate.convertAndSendToUser(
-				String.valueOf(saved.getReceiver().getId()),
-				"/queue/messages",
-				saved
-		);
+
+		messagingTemplate.convertAndSend("/topic/messages/" + payload.getReceiverEmail(), saved);
+		messagingTemplate.convertAndSend("/topic/messages/" + payload.getSenderEmail(), saved);
 		return saved;
 	}
 
 	@MessageMapping("/chat.typing")
 	public void typing(@Payload TypingPayload payload) {
-		if (payload == null || payload.getReceiverId() == null) {
+		if (payload == null || payload.getReceiverEmail() == null) {
 			return;
 		}
-		messagingTemplate.convertAndSendToUser(
-				String.valueOf(payload.getReceiverId()),
-				"/queue/typing",
-				"typing"
-		);
+		messagingTemplate.convertAndSend("/topic/typing/" + payload.getReceiverEmail(), "typing");
 	}
 
 	@MessageMapping("/chat.seen")
@@ -50,12 +48,8 @@ public class ChatController {
 			return;
 		}
 		messageService.markAsSeen(payload.getMessageId());
-		if (payload.getSenderId() != null) {
-			messagingTemplate.convertAndSendToUser(
-					String.valueOf(payload.getSenderId()),
-					"/queue/seen",
-					payload.getMessageId()
-			);
+		if (payload.getSenderEmail() != null) {
+			messagingTemplate.convertAndSend("/topic/seen/" + payload.getSenderEmail(), payload.getMessageId());
 		}
 	}
 
@@ -76,29 +70,29 @@ public class ChatController {
 	}
 
 	private static class TypingPayload {
-		private Long senderId;
-		private Long receiverId;
+		private String senderEmail;
+		private String receiverEmail;
 
-		public Long getSenderId() {
-			return senderId;
+		public String getSenderEmail() {
+			return senderEmail;
 		}
 
-		public void setSenderId(Long senderId) {
-			this.senderId = senderId;
+		public void setSenderEmail(String senderEmail) {
+			this.senderEmail = senderEmail;
 		}
 
-		public Long getReceiverId() {
-			return receiverId;
+		public String getReceiverEmail() {
+			return receiverEmail;
 		}
 
-		public void setReceiverId(Long receiverId) {
-			this.receiverId = receiverId;
+		public void setReceiverEmail(String receiverEmail) {
+			this.receiverEmail = receiverEmail;
 		}
 	}
 
 	private static class SeenPayload {
 		private Long messageId;
-		private Long senderId;
+		private String senderEmail;
 
 		public Long getMessageId() {
 			return messageId;
@@ -108,12 +102,42 @@ public class ChatController {
 			this.messageId = messageId;
 		}
 
-		public Long getSenderId() {
-			return senderId;
+		public String getSenderEmail() {
+			return senderEmail;
 		}
 
-		public void setSenderId(Long senderId) {
-			this.senderId = senderId;
+		public void setSenderEmail(String senderEmail) {
+			this.senderEmail = senderEmail;
+		}
+	}
+
+	private static class ChatMessagePayload {
+		private String senderEmail;
+		private String receiverEmail;
+		private String content;
+
+		public String getSenderEmail() {
+			return senderEmail;
+		}
+
+		public void setSenderEmail(String senderEmail) {
+			this.senderEmail = senderEmail;
+		}
+
+		public String getReceiverEmail() {
+			return receiverEmail;
+		}
+
+		public void setReceiverEmail(String receiverEmail) {
+			this.receiverEmail = receiverEmail;
+		}
+
+		public String getContent() {
+			return content;
+		}
+
+		public void setContent(String content) {
+			this.content = content;
 		}
 	}
 
