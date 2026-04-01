@@ -183,7 +183,7 @@ export default function Chat() {
             color: '#0b0b0b',
             boxShadow: '0 10px 24px rgba(0, 0, 0, 0.25)',
           }}>
-            {hasChat ? (isConnected ? 'CHAT ACTIVE' : 'CONNECTING...') : 'NO CHAT FOUND'}
+            {hasChat ? (isConnected ? 'CHAT ACTIVE' : 'REALTIME CONNECTING') : 'NO CHAT FOUND'}
           </span>
         </div>
 
@@ -243,24 +243,35 @@ export default function Chat() {
           {typingNotice && <p style={{ marginTop: '8px', color: '#a855f7' }}>{typingNotice}</p>}
 
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault()
-            if (!clientRef.current || !clientRef.current.connected || !isConnected) {
-              return
-            }
             if (!partnerEmail || !content.trim() || !currentEmail) {
               return
             }
             const trimmedContent = content.trim()
             const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
 
-            clientRef.current.send(
-              '/app/chat.send',
-              {},
-              JSON.stringify({ senderEmail: currentEmail, receiverEmail: partnerEmail, content: trimmedContent, messageId: localId })
-            )
-            setMessages((prev) => [...prev, { id: localId, content: trimmedContent, self: true, status: 'SENT' }])
-            setContent('')
+            try {
+              const response = await fetch('http://localhost:8080/messages/send', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ receiverEmail: partnerEmail, content: trimmedContent }),
+              })
+
+              const data = await response.json().catch(() => null)
+              if (!response.ok) {
+                alert(data?.message || 'Failed to send message')
+                return
+              }
+
+              setMessages((prev) => [...prev, { id: localId, content: trimmedContent, self: true, status: 'SENT' }])
+              setContent('')
+            } catch (error) {
+              alert('Failed to send message')
+            }
           }}
           style={{
             marginTop: '14px',
@@ -294,9 +305,9 @@ export default function Chat() {
                   fontWeight: 800,
                   cursor: 'pointer',
                   boxShadow: '0 12px 30px rgba(0, 0, 0, 0.3)',
-                  opacity: isConnected && hasChat ? 1 : 0.6,
+                  opacity: hasChat ? 1 : 0.6,
                 }}
-                disabled={!isConnected || !hasChat || !partnerEmail}
+                disabled={!hasChat || !partnerEmail}
               >
                 Send
               </button>
