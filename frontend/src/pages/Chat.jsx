@@ -48,6 +48,7 @@ export default function Chat() {
   const [isConnected, setIsConnected] = useState(false)
   const clientRef = useRef(null)
   const partnerRef = useRef('')
+  const messagesRef = useRef(null)
   const fadeStyleId = 'chat-fade-keyframes'
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
   const currentEmail = (() => {
@@ -170,7 +171,11 @@ export default function Chat() {
     if (!document.getElementById(fadeStyleId)) {
       const styleTag = document.createElement('style')
       styleTag.id = fadeStyleId
-      styleTag.innerHTML = `@keyframes messageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`
+      styleTag.innerHTML = `
+        @keyframes messageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+        .chat-scroll-hidden::-webkit-scrollbar { display: none; width: 0; height: 0; }
+      `
       document.head.appendChild(styleTag)
     }
 
@@ -239,6 +244,11 @@ export default function Chat() {
       setIsConnected(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (!messagesRef.current) return
+    messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+  }, [messages, partnerEmail])
 
   return (
     <div style={containerStyle}>
@@ -327,7 +337,7 @@ export default function Chat() {
           </div>
         )}
 
-          <div style={listStyle}>
+          <div ref={messagesRef} className="chat-scroll-hidden" style={listStyle}>
             {messages.length === 0 && <div style={{ color: '#166534' }}>No messages yet.</div>}
             {messages.map((msg, index) => {
               const isSelf = msg.self
