@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 const pageStyle = {
   minHeight: '100vh',
   padding: '32px 24px',
-  background: 'linear-gradient(145deg, #0f172a, #1e293b)',
-  color: '#e2e8f0',
+  background: 'radial-gradient(circle at top left, #d7f8e2 0%, #7ddda5 35%, #3cbf79 100%)',
+  color: '#0f172a',
   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
 }
 
@@ -16,22 +16,23 @@ const gridStyle = {
 }
 
 const sectionStyle = {
-  background: 'rgba(255, 255, 255, 0.05)',
+  background: 'linear-gradient(165deg, rgba(232, 255, 239, 0.94), rgba(191, 245, 209, 0.9))',
   borderRadius: '16px',
   padding: '18px',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  boxShadow: '0 15px 40px rgba(0, 0, 0, 0.35)',
+  border: '1px solid rgba(15, 23, 42, 0.08)',
+  boxShadow: '0 18px 40px rgba(16, 58, 39, 0.22), inset 0 1px 0 rgba(255,255,255,0.6)',
 }
 
 const cardStyle = {
   padding: '14px',
   borderRadius: '12px',
-  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(56, 189, 248, 0.12))',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  background: 'linear-gradient(145deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.85))',
+  border: '1px solid rgba(22, 163, 74, 0.18)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: '10px',
+  boxShadow: '0 10px 24px rgba(21, 128, 61, 0.16)',
 }
 
 const badgeBase = {
@@ -43,9 +44,9 @@ const badgeBase = {
 }
 
 const statusStyles = {
-  PENDING: { ...badgeBase, background: 'rgba(251, 191, 36, 0.2)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.35)' },
-  ACCEPTED: { ...badgeBase, background: 'rgba(34, 197, 94, 0.18)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.35)' },
-  REJECTED: { ...badgeBase, background: 'rgba(248, 113, 113, 0.2)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.35)' },
+  PENDING: { ...badgeBase, background: 'rgba(253, 224, 71, 0.35)', color: '#854d0e', border: '1px solid rgba(234, 179, 8, 0.45)' },
+  ACCEPTED: { ...badgeBase, background: 'rgba(74, 222, 128, 0.25)', color: '#166534', border: '1px solid rgba(22, 163, 74, 0.35)' },
+  REJECTED: { ...badgeBase, background: 'rgba(251, 113, 133, 0.22)', color: '#881337', border: '1px solid rgba(225, 29, 72, 0.35)' },
 }
 
 const buttonRow = {
@@ -72,6 +73,25 @@ export default function Requests() {
   const navigate = useNavigate()
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  const currentEmail = (() => {
+    try {
+      if (!token) return ''
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      return payload?.sub || ''
+    } catch {
+      return ''
+    }
+  })()
+
+  const acceptedChatPartners = Array.from(new Set([
+    ...incoming.filter((item) => item.status === 'ACCEPTED').map((item) => item.senderEmail),
+    ...sent.filter((item) => item.status === 'ACCEPTED').map((item) => item.receiverEmail),
+  ]))
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
 
   const authHeaders = () => {
     if (!token) {
@@ -106,7 +126,7 @@ export default function Requests() {
 
       setIncoming(incomingData)
       setSent(sentData)
-    } catch (error) {
+    } catch {
       alert('Failed to load requests.')
     }
   }
@@ -137,7 +157,7 @@ export default function Requests() {
       await fetchRequests()
       setReceiverEmail('')
       alert(data?.message || 'Request sent')
-    } catch (error) {
+    } catch {
       alert('Failed to send request. Please try again.')
     }
   }
@@ -154,7 +174,7 @@ export default function Requests() {
       }
 
       setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'ACCEPTED' } : item)))
-    } catch (error) {
+    } catch {
       alert('Failed to accept request. Please try again.')
     }
   }
@@ -171,7 +191,7 @@ export default function Requests() {
       }
 
       setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'REJECTED' } : item)))
-    } catch (error) {
+    } catch {
       alert('Failed to reject request. Please try again.')
     }
   }
@@ -179,9 +199,35 @@ export default function Requests() {
   return (
     <div style={pageStyle}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '18px' }}>
-          <p style={{ color: '#94a3b8', margin: 0, fontSize: '14px', letterSpacing: '0.4px' }}>Stay on top of conversations</p>
-          <h1 style={{ margin: '6px 0 0', fontSize: '30px', letterSpacing: '0.4px' }}>Chat Requests</h1>
+        <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ color: '#166534', margin: 0, fontSize: '14px', letterSpacing: '0.4px' }}>Stay on top of conversations</p>
+            <h1 style={{ margin: '6px 0 0', fontSize: '30px', letterSpacing: '0.4px', color: '#14532d' }}>Chat Requests</h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              maxWidth: '220px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              padding: '8px 12px',
+              borderRadius: '999px',
+              border: '1px solid rgba(6, 78, 59, 0.18)',
+              background: 'rgba(220, 252, 231, 0.75)',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#065f46',
+            }}>
+              {currentEmail || 'Profile'}
+            </span>
+            <button
+              type="button"
+              style={actionButton('linear-gradient(135deg, #fb7185, #ef4444)', '#0b0b0b')}
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSend} style={{ marginBottom: '18px', display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -192,9 +238,9 @@ export default function Requests() {
               flex: 1,
               padding: '12px 14px',
               borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: '#e2e8f0',
+              border: '1px solid rgba(22, 163, 74, 0.25)',
+              background: 'rgba(240, 253, 244, 0.92)',
+              color: '#14532d',
               fontSize: '14px',
               outline: 'none',
             }}
@@ -217,7 +263,7 @@ export default function Requests() {
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.senderEmail}</div>
-                    <div style={{ marginTop: '4px', fontSize: '13px', color: '#cbd5e1' }}>Incoming</div>
+                    <div style={{ marginTop: '4px', fontSize: '13px', color: '#166534' }}>Incoming</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={statusStyles[item.status]}>{item.status}</span>
@@ -239,15 +285,6 @@ export default function Requests() {
                         </button>
                       </div>
                     )}
-                    {item.status === 'ACCEPTED' && (
-                      <button
-                        type="button"
-                        style={actionButton('linear-gradient(135deg, #38bdf8, #22c55e)', '#0b0b0b')}
-                        onClick={() => navigate('/chat')}
-                      >
-                        Chat
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -261,24 +298,38 @@ export default function Requests() {
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.receiverEmail}</div>
-                    <div style={{ marginTop: '4px', fontSize: '13px', color: '#cbd5e1' }}>Sent</div>
+                    <div style={{ marginTop: '4px', fontSize: '13px', color: '#166534' }}>Sent</div>
                   </div>
-                  {item.status === 'ACCEPTED' ? (
-                    <button
-                      type="button"
-                      style={actionButton('linear-gradient(135deg, #38bdf8, #22c55e)', '#0b0b0b')}
-                      onClick={() => navigate('/chat')}
-                    >
-                      Chat
-                    </button>
-                  ) : (
-                    <span style={statusStyles[item.status]}>{item.status}</span>
-                  )}
+                  <span style={statusStyles[item.status]}>{item.status}</span>
                 </div>
               ))}
             </div>
           </section>
         </div>
+
+        <section style={{ ...sectionStyle, marginTop: '18px' }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Accepted Chats</h3>
+          {acceptedChatPartners.length === 0 && (
+            <p style={{ margin: 0, color: '#166534' }}>No accepted chats yet.</p>
+          )}
+          <div style={{ display: 'grid', gap: '10px' }}>
+            {acceptedChatPartners.map((email) => (
+              <div key={email} style={cardStyle}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '15px' }}>{email}</div>
+                  <div style={{ marginTop: '4px', fontSize: '13px', color: '#166534' }}>Ready to chat</div>
+                </div>
+                <button
+                  type="button"
+                  style={actionButton('linear-gradient(135deg, #38bdf8, #22c55e)', '#0b0b0b')}
+                  onClick={() => navigate(`/chat?partner=${encodeURIComponent(email)}`)}
+                >
+                  Chat
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   )

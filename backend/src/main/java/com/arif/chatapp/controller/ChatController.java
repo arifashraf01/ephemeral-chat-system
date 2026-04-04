@@ -1,5 +1,6 @@
 package com.arif.chatapp.controller;
 
+import com.arif.chatapp.dto.ChatMessageResponse;
 import com.arif.chatapp.model.Message;
 import com.arif.chatapp.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class ChatController {
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@MessageMapping("/chat.send")
-	public Message sendMessage(@Payload ChatMessagePayload payload) {
+	public ChatMessageResponse sendMessage(@Payload ChatMessagePayload payload) {
 		if (payload == null || payload.getSenderEmail() == null || payload.getReceiverEmail() == null || payload.getContent() == null) {
 			throw new IllegalArgumentException("Invalid chat payload");
 		}
@@ -28,10 +29,11 @@ public class ChatController {
 				payload.getReceiverEmail(),
 				payload.getContent()
 		);
+		ChatMessageResponse response = messageService.toChatMessageResponse(saved);
 
-		messagingTemplate.convertAndSend("/topic/messages/" + payload.getReceiverEmail(), saved);
-		messagingTemplate.convertAndSend("/topic/messages/" + payload.getSenderEmail(), saved);
-		return saved;
+		messagingTemplate.convertAndSend("/topic/messages/" + payload.getReceiverEmail(), response);
+		messagingTemplate.convertAndSend("/topic/messages/" + payload.getSenderEmail(), response);
+		return response;
 	}
 
 	@MessageMapping("/chat.typing")
