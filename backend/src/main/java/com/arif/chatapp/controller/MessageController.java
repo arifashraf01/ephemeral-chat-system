@@ -66,11 +66,11 @@ public class MessageController {
         List<ChatMessageResponse> response = messageService.getConversationByEmail(
                 authentication.getName(),
                 partnerEmail
-            )
+        )
                 .stream()
                 .map(messageService::toChatMessageResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
-            }
+    }
 }

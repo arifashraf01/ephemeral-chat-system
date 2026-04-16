@@ -34,25 +34,8 @@ public class AuthController {
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public java.util.Map<String, String> login(@Valid @RequestBody LoginRequest request) {
-        log.info("Login request received: email='{}', passwordLength={}", request.getEmail(),
-                request.getPassword() == null ? 0 : request.getPassword().length());
+        log.info("Login request received: email='{}'", request.getEmail());
         String token = authService.login(request.getEmail(), request.getPassword());
-        return java.util.Map.of("token", token);
-    }
-
-    /**
-     * Temporary debug helper to verify request binding without DTO validation.
-     * Send JSON: { "email": "...", "password": "..." }
-     */
-    @PostMapping("/login-debug")
-    public java.util.Map<String, String> loginDebug(@RequestBody java.util.Map<String, String> body) {
-        String email = body.get("email");
-        String password = body.get("password");
-        log.info("Login DEBUG body: {}", body);
-        if (email == null || password == null) {
-            throw new IllegalArgumentException("Missing email or password");
-        }
-        String token = authService.login(email, password);
         return java.util.Map.of("token", token);
     }
 

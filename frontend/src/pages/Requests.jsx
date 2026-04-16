@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URLS } from '../config'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -107,11 +108,11 @@ export default function Requests() {
   const fetchRequests = async () => {
     try {
       const [incomingResponse, sentResponse] = await Promise.all([
-        fetch('http://localhost:8080/requests/incoming', {
+        fetch(API_URLS.requestsIncoming, {
           method: 'GET',
           headers: authHeaders(),
         }),
-        fetch('http://localhost:8080/requests/sent', {
+        fetch(API_URLS.requestsSent, {
           method: 'GET',
           headers: authHeaders(),
         }),
@@ -140,7 +141,7 @@ export default function Requests() {
     if (!receiverEmail.trim()) return
 
     try {
-      const response = await fetch('http://localhost:8080/requests/send', {
+      const response = await fetch(API_URLS.requestsSend, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ receiverEmail: receiverEmail.trim() }),
@@ -164,7 +165,7 @@ export default function Requests() {
 
   const handleAccept = async (requestId) => {
     try {
-      const response = await fetch(`http://localhost:8080/requests/accept?requestId=${requestId}`, {
+      const response = await fetch(API_URLS.requestsAccept(requestId), {
         method: 'POST',
         headers: authHeaders(),
       })
@@ -181,7 +182,7 @@ export default function Requests() {
 
   const handleReject = async (requestId) => {
     try {
-      const response = await fetch(`http://localhost:8080/requests/reject?requestId=${requestId}`, {
+      const response = await fetch(API_URLS.requestsReject(requestId), {
         method: 'POST',
         headers: authHeaders(),
       })

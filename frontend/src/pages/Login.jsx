@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { API_URLS } from '../config'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -70,7 +71,7 @@ export default function Login() {
     event.preventDefault()
 
     try {
-      const response = await fetch('http://localhost:8080/auth/login', {
+      const response = await fetch(API_URLS.authLogin, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

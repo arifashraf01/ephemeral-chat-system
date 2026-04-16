@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -13,18 +14,21 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "change-this-secret-to-env-managed-value";
-    private static final long EXPIRATION_MILLIS = 60 * 60 * 1000; // 1 hour
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.expiration-millis}")
+    private long expirationMillis;
 
     public String generateToken(String email) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + EXPIRATION_MILLIS);
+        Date expiry = new Date(now.getTime() + expirationMillis);
 
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+            .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -43,7 +47,7 @@ public class JwtUtil {
 
     private Jws<Claims> parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
                 .build()
                 .parseClaimsJws(token);
     }

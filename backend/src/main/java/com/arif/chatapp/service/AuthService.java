@@ -7,6 +7,9 @@ import com.arif.chatapp.repository.UserRepository;
 import com.arif.chatapp.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
     private final JwtUtil jwtUtil;
+    private final JavaMailSender mailSender;
+
+    @Value("${app.mail.from:}")
+    private String mailFrom;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -41,6 +48,26 @@ public class AuthService {
         otp.setExpiresAt(expiresAt);
 
         otpRepository.save(otp);
+        sendOtpEmail(email, otpCode);
+    }
+
+    private void sendOtpEmail(String to, String otpCode) {
+        if (mailFrom == null || mailFrom.isBlank()) {
+            throw new IllegalStateException("MAIL_FROM is not configured");
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailFrom);
+            message.setTo(to);
+            message.setSubject("Your OTP for Ephemeral Chat System");
+            message.setText("Your OTP is: " + otpCode + "\nIt expires in 5 minutes.");
+            mailSender.send(message);
+            log.info("OTP email sent to {}", to);
+        } catch (Exception ex) {
+            log.error("Failed to send OTP email to {}", to, ex);
+            throw new IllegalStateException("Failed to send OTP email");
+        }
     }
 
     public void verifyOtp(String email, String otp, String password) {

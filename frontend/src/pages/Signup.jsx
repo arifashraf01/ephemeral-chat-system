@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URLS } from '../config'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -67,7 +68,7 @@ export default function Signup() {
     if (step === 1) {
       try {
         console.log('Sending OTP for email:', email)
-        const response = await fetch('http://localhost:8080/auth/send-otp', {
+        const response = await fetch(API_URLS.authSendOtp, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
@@ -88,7 +89,7 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/auth/verify-otp', {
+      const response = await fetch(API_URLS.authVerifyOtp, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, password }),

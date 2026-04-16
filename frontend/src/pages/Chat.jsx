@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
 import { over } from 'stompjs'
 import { useLocation } from 'react-router-dom'
+import { API_URLS } from '../config'
 
 const containerStyle = {
   minHeight: '100vh',
@@ -105,7 +106,7 @@ export default function Chat() {
   const fetchChats = async () => {
     if (!token) return
     try {
-      const response = await fetch('http://localhost:8080/chats', {
+      const response = await fetch(API_URLS.chats, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,7 +146,7 @@ export default function Chat() {
       }
 
       try {
-        const response = await fetch(`http://localhost:8080/messages/conversation?partnerEmail=${encodeURIComponent(partnerEmail)}`, {
+        const response = await fetch(API_URLS.messagesConversation(partnerEmail), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -179,7 +180,7 @@ export default function Chat() {
       document.head.appendChild(styleTag)
     }
 
-    const socket = new SockJS('http://localhost:8080/ws')
+    const socket = new SockJS(API_URLS.ws)
     const stompClient = over(socket)
     stompClient.debug = () => {}
     clientRef.current = stompClient
@@ -390,7 +391,7 @@ export default function Chat() {
             const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
 
             try {
-              const response = await fetch('http://localhost:8080/messages/send', {
+              const response = await fetch(API_URLS.messagesSend, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
