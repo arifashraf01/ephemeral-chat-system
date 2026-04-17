@@ -118,11 +118,17 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-        public void markAsSeen(Long messageId) {
+        public Message markAsSeenByRecipient(Long messageId, String recipientEmail) {
                 Message message = messageRepository.findById(messageId)
                                 .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+
+                String actualRecipient = message.getReceiver().getEmail();
+                if (!actualRecipient.equals(recipientEmail)) {
+                        throw new IllegalArgumentException("Only the recipient can mark a message as seen");
+                }
+
                 message.setStatus(Message.Status.SEEN);
-                messageRepository.save(message);
+                return messageRepository.save(message);
         }
 
         public void deleteChatMessages(Long userId, Long partnerId) {

@@ -67,6 +67,15 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  const getErrorMessage = async (response, fallbackMessage) => {
+    try {
+      const payload = await response.json()
+      return payload?.message || fallbackMessage
+    } catch {
+      return fallbackMessage
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
 
@@ -77,10 +86,12 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => null)
 
       if (!response.ok || !data?.token) {
-        throw new Error('Login failed')
+        const message = data?.message || (await getErrorMessage(response, 'Login failed. Please check your credentials and try again.'))
+        alert(message)
+        return
       }
 
       localStorage.setItem('token', data.token)

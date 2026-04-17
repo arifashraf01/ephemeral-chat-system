@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
-import { over } from 'stompjs'
+import { Client } from '@stomp/stompjs'
 import { useLocation } from 'react-router-dom'
 import { API_URLS } from '../config'
 
@@ -180,12 +180,15 @@ export default function Chat() {
       document.head.appendChild(styleTag)
     }
 
-    const socket = new SockJS(API_URLS.ws)
-    const stompClient = over(socket)
-    stompClient.debug = () => {}
+    const stompClient = new Client({
+      webSocketFactory: () => new SockJS(API_URLS.ws),
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      debug: () => {},
+      reconnectDelay: 3000,
+    })
     clientRef.current = stompClient
 
-    stompClient.connect({}, () => {
+    stompClient.onConnect = () => {
       console.log('WebSocket connected')
       setIsConnected(true)
       if (!currentEmail) return
@@ -206,11 +209,10 @@ export default function Chat() {
         const senderEmail = normalized.senderEmail
         const messageId = normalized.id
         if (senderEmail && clientRef.current?.connected) {
-          clientRef.current.send(
-            '/app/chat.seen',
-            {},
-            JSON.stringify({ senderEmail, messageId })
-          )
+          clientRef.current.publish({
+            destination: '/app/chat.seen',
+            body: JSON.stringify({ messageId }),
+          })
         }
       })
 
@@ -231,16 +233,23 @@ export default function Chat() {
         if (!seenId) return
         setMessages((prev) => prev.map((msg) => (String(msg.id) === seenId ? { ...msg, status: 'SEEN' } : msg)))
       })
-    }, (error) => {
+    }
+
+    stompClient.onStompError = (error) => {
+      setIsConnected(false)
+      console.error('WebSocket STOMP error', error)
+    }
+
+    stompClient.onWebSocketError = (error) => {
       setIsConnected(false)
       console.error('WebSocket error', error)
-    })
+    }
+
+    stompClient.activate()
 
     return () => {
-      if (clientRef.current && clientRef.current.connected) {
-        clientRef.current.disconnect(() => console.log('WebSocket disconnected'))
-      } else {
-        socket.close()
+      if (clientRef.current?.active) {
+        clientRef.current.deactivate()
       }
       setIsConnected(false)
     }
@@ -440,12 +449,11 @@ export default function Chat() {
                 onChange={(event) => {
                   const next = event.target.value
                   setContent(next)
-                  if (clientRef.current && clientRef.current.connected && isConnected && partnerEmail && currentEmail) {
-                    clientRef.current.send(
-                      '/app/chat.typing',
-                      {},
-                      JSON.stringify({ senderEmail: currentEmail, receiverEmail: partnerEmail, typing: true })
-                    )
+                  if (clientRef.current?.connected && isConnected && partnerEmail && currentEmail) {
+                    clientRef.current.publish({
+                      destination: '/app/chat.typing',
+                      body: JSON.stringify({ senderEmail: currentEmail, receiverEmail: partnerEmail, typing: true }),
+                    })
                   }
                 }}
                 style={{

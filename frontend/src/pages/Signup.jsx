@@ -62,12 +62,20 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [step, setStep] = useState(1)
 
+  const getErrorMessage = async (response, fallbackMessage) => {
+    try {
+      const payload = await response.json()
+      return payload?.message || fallbackMessage
+    } catch {
+      return fallbackMessage
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (step === 1) {
       try {
-        console.log('Sending OTP for email:', email)
         const response = await fetch(API_URLS.authSendOtp, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -75,9 +83,8 @@ export default function Signup() {
         })
 
         if (!response.ok) {
-          const text = await response.text()
-          console.log('BACKEND ERROR:', text)
-          alert(text)
+          const message = await getErrorMessage(response, 'Failed to send OTP. Please try again.')
+          alert(message)
           return
         }
 
@@ -96,7 +103,9 @@ export default function Signup() {
       })
 
       if (!response.ok) {
-        throw new Error('Signup failed')
+        const message = await getErrorMessage(response, 'Verification failed. Please check the OTP and try again.')
+        alert(message)
+        return
       }
 
       navigate('/login')

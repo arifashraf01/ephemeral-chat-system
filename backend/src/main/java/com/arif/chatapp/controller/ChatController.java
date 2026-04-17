@@ -10,6 +10,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -19,25 +21,32 @@ public class ChatController {
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@MessageMapping("/chat.send")
-	public ChatMessageResponse sendMessage(@Payload ChatMessagePayload payload) {
-		if (payload == null || payload.getSenderEmail() == null || payload.getReceiverEmail() == null || payload.getContent() == null) {
+	public ChatMessageResponse sendMessage(@Payload ChatMessagePayload payload, Principal principal) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			throw new IllegalArgumentException("WebSocket authentication is required");
+		}
+
+		if (payload == null || payload.getReceiverEmail() == null || payload.getContent() == null) {
 			throw new IllegalArgumentException("Invalid chat payload");
 		}
 
 		Message saved = messageService.sendMessageByEmail(
-				payload.getSenderEmail(),
+				principal.getName(),
 				payload.getReceiverEmail(),
 				payload.getContent()
 		);
 		ChatMessageResponse response = messageService.toChatMessageResponse(saved);
 
 		messagingTemplate.convertAndSend("/topic/messages/" + payload.getReceiverEmail(), response);
-		messagingTemplate.convertAndSend("/topic/messages/" + payload.getSenderEmail(), response);
+		messagingTemplate.convertAndSend("/topic/messages/" + principal.getName(), response);
 		return response;
 	}
 
 	@MessageMapping("/chat.typing")
-	public void typing(@Payload TypingPayload payload) {
+	public void typing(@Payload TypingPayload payload, Principal principal) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return;
+		}
 		if (payload == null || payload.getReceiverEmail() == null) {
 			return;
 		}
@@ -45,14 +54,16 @@ public class ChatController {
 	}
 
 	@MessageMapping("/chat.seen")
-	public void markSeen(@Payload SeenPayload payload) {
+	public void markSeen(@Payload SeenPayload payload, Principal principal) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return;
+		}
 		if (payload == null || payload.getMessageId() == null) {
 			return;
 		}
-		messageService.markAsSeen(payload.getMessageId());
-		if (payload.getSenderEmail() != null) {
-			messagingTemplate.convertAndSend("/topic/seen/" + payload.getSenderEmail(), payload.getMessageId());
-		}
+
+		Message updated = messageService.markAsSeenByRecipient(payload.getMessageId(), principal.getName());
+		messagingTemplate.convertAndSend("/topic/seen/" + updated.getSender().getEmail(), payload.getMessageId());
 	}
 
 	@MessageMapping("/chat.open")
@@ -94,7 +105,6 @@ public class ChatController {
 
 	private static class SeenPayload {
 		private Long messageId;
-		private String senderEmail;
 
 		public Long getMessageId() {
 			return messageId;
@@ -103,28 +113,11 @@ public class ChatController {
 		public void setMessageId(Long messageId) {
 			this.messageId = messageId;
 		}
-
-		public String getSenderEmail() {
-			return senderEmail;
-		}
-
-		public void setSenderEmail(String senderEmail) {
-			this.senderEmail = senderEmail;
-		}
 	}
 
 	private static class ChatMessagePayload {
-		private String senderEmail;
 		private String receiverEmail;
 		private String content;
-
-		public String getSenderEmail() {
-			return senderEmail;
-		}
-
-		public void setSenderEmail(String senderEmail) {
-			this.senderEmail = senderEmail;
-		}
 
 		public String getReceiverEmail() {
 			return receiverEmail;

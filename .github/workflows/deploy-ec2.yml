@@ -1,0 +1,72 @@
+name: Deploy To EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - frontend/**
+      - .github/workflows/deploy-ec2.yml
+  workflow_dispatch:
+
+env:
+  EC2_PORT: 22
+  SERVER_PATH: /home/ubuntu/ephemeral-chat-system
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -p $EC2_PORT -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload frontend artifacts
+        run: |
+          scp -i ~/.ssh/ec2_key -P $EC2_PORT -r frontend/dist/* "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/chatapp-dist/"
+
+      - name: Deploy frontend on server
+        run: |
+          ssh -i ~/.ssh/ec2_key -p $EC2_PORT "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" '
+            set -e
+            sudo mkdir -p /var/www/chatapp
+            sudo cp -r /tmp/chatapp-dist/* /var/www/chatapp/
+            sudo chown -R www-data:www-data /var/www/chatapp
+            sudo find /var/www/chatapp -type d -exec chmod 755 {} \;
+            sudo find /var/www/chatapp -type f -exec chmod 644 {} \;
+            sudo systemctl reload nginx
+          '
+
+      - name: Deploy backend on server
+        run: |
+          ssh -i ~/.ssh/ec2_key -p $EC2_PORT "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" '
+            set -e
+            cd "$SERVER_PATH"
+            git fetch origin
+            git reset --hard origin/main
+            cd backend
+            ./mvnw -q -DskipTests package
+            sudo systemctl restart chatapp
+            sudo systemctl is-active chatapp
+          '

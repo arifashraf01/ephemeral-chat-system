@@ -1,4 +1,5 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '')
+const defaultBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8080'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || defaultBaseUrl).replace(/\/$/, '')
 
 export const API_URLS = {
   authLogin: `${API_BASE_URL}/auth/login`,
