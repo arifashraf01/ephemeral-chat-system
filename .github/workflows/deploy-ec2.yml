@@ -12,7 +12,6 @@ on:
 
 env:
   EC2_PORT: 22
-  SERVER_PATH: /home/ubuntu/ephemeral-chat-system
 
 jobs:
   deploy:
@@ -100,10 +99,10 @@ jobs:
         run: |
           ssh -i ~/.ssh/ec2_key -p $EC2_PORT "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" '
             set -e
-            mkdir -p "$SERVER_PATH"
-            rm -rf "$SERVER_PATH/backend"
-            tar -xzf /tmp/backend.tgz -C "$SERVER_PATH"
-            cd "$SERVER_PATH/backend"
+            mkdir -p /home/ubuntu/ephemeral-chat-system
+            rm -rf /home/ubuntu/ephemeral-chat-system/backend
+            tar -xzf /tmp/backend.tgz -C /home/ubuntu/ephemeral-chat-system
+            cd /home/ubuntu/ephemeral-chat-system/backend
             chmod +x mvnw
             ./mvnw -q -DskipTests package
             sudo systemctl restart chatapp
