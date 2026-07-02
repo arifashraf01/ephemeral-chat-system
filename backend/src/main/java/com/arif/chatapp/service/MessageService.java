@@ -146,8 +146,8 @@ public class MessageService {
                 }
         }
 
-        public void deleteMessagesForUser(Long userId, Long chatPartnerId) {
-                User user = userRepository.findById(userId)
+        public void deleteMessagesForUserByEmail(String userEmail, Long chatPartnerId) {
+                User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
                 User partner = userRepository.findById(chatPartnerId)
                                 .orElseThrow(() -> new IllegalArgumentException("Partner not found"));

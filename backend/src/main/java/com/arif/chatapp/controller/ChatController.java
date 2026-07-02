@@ -67,19 +67,25 @@ public class ChatController {
 	}
 
 	@MessageMapping("/chat.open")
-	public void openChat(@Payload ChatSessionPayload payload) {
-		if (payload == null || payload.getUserId() == null || payload.getPartnerId() == null) {
+	public void openChat(@Payload ChatSessionPayload payload, Principal principal) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return;
 		}
-		log.info("Chat opened between {} and {}", payload.getUserId(), payload.getPartnerId());
+		if (payload == null || payload.getPartnerId() == null) {
+			return;
+		}
+		log.info("Chat opened between {} and partner ID {}", principal.getName(), payload.getPartnerId());
 	}
 
 	@MessageMapping("/chat.close")
-	public void closeChat(@Payload ChatSessionPayload payload) {
-		if (payload == null || payload.getUserId() == null || payload.getPartnerId() == null) {
+	public void closeChat(@Payload ChatSessionPayload payload, Principal principal) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return;
 		}
-		messageService.deleteMessagesForUser(payload.getUserId(), payload.getPartnerId());
+		if (payload == null || payload.getPartnerId() == null) {
+			return;
+		}
+		messageService.deleteMessagesForUserByEmail(principal.getName(), payload.getPartnerId());
 	}
 
 	private static class TypingPayload {
