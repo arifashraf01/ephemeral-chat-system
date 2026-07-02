@@ -34,14 +34,16 @@ public class AuthService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public void sendOtp(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            throw new IllegalArgumentException("User already exists");
-        });
+        Optional<Otp> existing = otpRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            if (existing.get().getExpiresAt().isAfter(Instant.now().plus(Duration.ofMinutes(4)))) {
+                throw new IllegalArgumentException("Please wait before requesting another OTP");
+            }
+        }
 
         String otpCode = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
         Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
 
-        Optional<Otp> existing = otpRepository.findByEmail(email);
         Otp otp = existing.orElseGet(Otp::new);
         otp.setEmail(email);
         otp.setOtpCode(otpCode);
@@ -82,7 +84,7 @@ public class AuthService {
             throw new IllegalArgumentException("OTP expired");
         }
 
-        User user = new User();
+        User user = userRepository.findByEmail(email).orElseGet(User::new);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setVerified(true);
