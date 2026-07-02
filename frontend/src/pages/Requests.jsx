@@ -70,6 +70,7 @@ const actionButton = (bg, color) => ({
 export default function Requests() {
   const [incoming, setIncoming] = useState([])
   const [sent, setSent] = useState([])
+  const [chats, setChats] = useState([])
   const [receiverEmail, setReceiverEmail] = useState('')
   const navigate = useNavigate()
 
@@ -84,10 +85,9 @@ export default function Requests() {
     }
   })()
 
-  const acceptedChatPartners = Array.from(new Set([
-    ...incoming.filter((item) => item.status === 'ACCEPTED').map((item) => item.senderEmail),
-    ...sent.filter((item) => item.status === 'ACCEPTED').map((item) => item.receiverEmail),
-  ]))
+  const acceptedChatPartners = Array.from(new Set(
+    chats.map((chat) => (chat.user1Email === currentEmail ? chat.user2Email : chat.user1Email))
+  )).filter(Boolean)
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -107,7 +107,7 @@ export default function Requests() {
 
   const fetchRequests = async () => {
     try {
-      const [incomingResponse, sentResponse] = await Promise.all([
+      const [incomingResponse, sentResponse, chatsResponse] = await Promise.all([
         fetch(API_URLS.requestsIncoming, {
           method: 'GET',
           headers: authHeaders(),
@@ -116,17 +116,23 @@ export default function Requests() {
           method: 'GET',
           headers: authHeaders(),
         }),
+        fetch(API_URLS.chats, {
+          method: 'GET',
+          headers: authHeaders(),
+        }),
       ])
 
-      if (!incomingResponse.ok || !sentResponse.ok) {
-        throw new Error('Failed to fetch requests')
+      if (!incomingResponse.ok || !sentResponse.ok || !chatsResponse.ok) {
+        throw new Error('Failed to fetch data')
       }
 
       const incomingData = await incomingResponse.json()
       const sentData = await sentResponse.json()
+      const chatsData = await chatsResponse.json()
 
       setIncoming(incomingData)
       setSent(sentData)
+      setChats(Array.isArray(chatsData) ? chatsData : [])
     } catch {
       alert('Failed to load requests.')
     }
