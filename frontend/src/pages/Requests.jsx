@@ -184,7 +184,7 @@ export default function Requests() {
         throw new Error('Accept failed')
       }
 
-      setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'ACCEPTED' } : item)))
+      await fetchRequests()
     } catch {
       alert('Failed to accept request. Please try again.')
     }
@@ -201,7 +201,7 @@ export default function Requests() {
         throw new Error('Reject failed')
       }
 
-      setIncoming((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'REJECTED' } : item)))
+      await fetchRequests()
     } catch {
       alert('Failed to reject request. Please try again.')
     }

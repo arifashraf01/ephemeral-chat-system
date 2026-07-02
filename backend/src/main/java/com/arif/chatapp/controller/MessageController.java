@@ -44,6 +44,7 @@ public class MessageController {
 
         ChatMessageResponse savedResponse = messageService.toChatMessageResponse(saved);
         messagingTemplate.convertAndSend("/topic/messages/" + request.getReceiverEmail(), savedResponse);
+        messagingTemplate.convertAndSend("/topic/messages/" + authentication.getName(), savedResponse);
 
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(true)

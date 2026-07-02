@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { API_URLS } from '../config'
 import Spinner from '../components/Spinner'
 
@@ -194,7 +194,6 @@ export default function Chat() {
     clientRef.current = stompClient
 
     stompClient.onConnect = () => {
-      console.log('WebSocket connected')
       setIsConnected(true)
       if (!currentEmail) return
 
@@ -208,7 +207,12 @@ export default function Chat() {
           normalized.senderEmail === activePartner || normalized.receiverEmail === activePartner
 
         if (isForActiveConversation) {
-          setMessages((prev) => [...prev, normalized])
+          setMessages((prev) => {
+            if (prev.some((m) => String(m.id) === String(normalized.id))) {
+              return prev
+            }
+            return [...prev, normalized]
+          })
         }
 
         const senderEmail = normalized.senderEmail
@@ -223,14 +227,12 @@ export default function Chat() {
 
       stompClient.subscribe(`/topic/typing/${currentEmail}`, (payload) => {
         const message = parseMessage(payload)
-        console.log('Typing event', message)
         setTypingNotice('User is typing...')
         setTimeout(() => setTypingNotice(''), 1500)
       })
 
       stompClient.subscribe(`/topic/seen/${currentEmail}`, (payload) => {
         const seen = parseMessage(payload)
-        console.log('Seen event', seen)
         const seenId =
           typeof seen === 'number' || typeof seen === 'string'
             ? String(seen)
@@ -269,9 +271,25 @@ export default function Chat() {
     <div style={containerStyle}>
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div>
-            <h1 style={{ margin: '0 0 4px', fontSize: '26px', color: '#064e3b' }}>Chat</h1>
-            <p style={{ margin: 0, color: '#166534' }}>Private messages and typing indicators</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link to="/requests" style={{
+              textDecoration: 'none',
+              color: '#064e3b',
+              background: 'rgba(167, 243, 208, 0.5)',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span>←</span> Dashboard
+            </Link>
+            <div>
+              <h1 style={{ margin: '0 0 4px', fontSize: '26px', color: '#064e3b' }}>Chat</h1>
+              <p style={{ margin: 0, color: '#166534' }}>Private messages and typing indicators</p>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
@@ -423,7 +441,12 @@ export default function Chat() {
 
               const saved = normalizeMessage(data?.data)
               if (saved) {
-                setMessages((prev) => [...prev, saved])
+                setMessages((prev) => {
+                  if (prev.some((m) => String(m.id) === String(saved.id))) {
+                    return prev
+                  }
+                  return [...prev, saved]
+                })
               } else {
                 setMessages((prev) => [...prev, {
                   id: localId,
