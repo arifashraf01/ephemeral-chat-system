@@ -31,7 +31,7 @@ public class AuthService {
     @Value("${app.mail.from:}")
     private String mailFrom;
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public void sendOtp(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
