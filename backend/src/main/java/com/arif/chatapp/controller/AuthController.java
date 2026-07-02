@@ -1,10 +1,10 @@
 package com.arif.chatapp.controller;
 
 import com.arif.chatapp.dto.LoginRequest;
+import com.arif.chatapp.dto.SendOtpRequest;
+import com.arif.chatapp.dto.VerifyOtpRequest;
 import com.arif.chatapp.service.AuthService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,26 +37,6 @@ public class AuthController {
         log.info("Login request received: email='{}'", request.getEmail());
         String token = authService.login(request.getEmail(), request.getPassword());
         return java.util.Map.of("token", token);
-    }
-
-    @Data
-    private static class SendOtpRequest {
-        @Email
-        @NotBlank
-        private String email;
-    }
-
-    @Data
-    private static class VerifyOtpRequest {
-        @Email
-        @NotBlank
-        private String email;
-
-        @NotBlank
-        private String otp;
-
-        @NotBlank
-        private String password;
     }
 
 }

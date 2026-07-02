@@ -35,4 +35,8 @@ public class Otp {
 
 	@Column(nullable = false)
 	private Instant expiresAt;
+
+	@Column(nullable = false)
+	@Builder.Default
+	private int failedAttempts = 0;
 }

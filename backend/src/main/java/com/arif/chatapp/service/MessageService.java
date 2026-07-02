@@ -42,6 +42,7 @@ public class MessageService {
         return chatExists || acceptedRequest;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public Message sendMessageByEmail(String senderEmail, String receiverEmail, String content) {
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
@@ -62,6 +63,7 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<Message> getConversationByEmail(String currentUserEmail, String partnerEmail, int page, int size) {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -74,23 +76,17 @@ public class MessageService {
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         
-        List<Message> content = messageRepository.findBySenderAndReceiverOrSenderAndReceiverOrderByTimestampDesc(
+        List<Message> content = messageRepository.findConversation(
                 currentUser,
                 partner,
-                partner,
-                currentUser,
                 pageable
         ).getContent();
 
-        List<Message> filtered = new java.util.ArrayList<>();
+        List<Message> reversed = new java.util.ArrayList<>();
         for (int i = content.size() - 1; i >= 0; i--) {
-            Message msg = content.get(i);
-            boolean keep = msg.getSender().getEmail().equals(currentUserEmail) ? !msg.isDeletedForSender() : !msg.isDeletedForReceiver();
-            if (keep) {
-                filtered.add(msg);
-            }
+            reversed.add(content.get(i));
         }
-        return filtered;
+        return reversed;
     }
 
     public ChatMessageResponse toChatMessageResponse(Message message) {

@@ -17,11 +17,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 			User reverseReceiver
 	);
 
-	org.springframework.data.domain.Page<Message> findBySenderAndReceiverOrSenderAndReceiverOrderByTimestampDesc(
-			User sender,
-			User receiver,
-			User reverseSender,
-			User reverseReceiver,
+	@org.springframework.data.jpa.repository.Query("SELECT m FROM Message m WHERE (m.sender = :user AND m.receiver = :partner AND m.deletedForSender = false) OR (m.sender = :partner AND m.receiver = :user AND m.deletedForReceiver = false) ORDER BY m.timestamp DESC")
+	org.springframework.data.domain.Page<Message> findConversation(
+			@org.springframework.data.repository.query.Param("user") User user,
+			@org.springframework.data.repository.query.Param("partner") User partner,
 			org.springframework.data.domain.Pageable pageable
 	);
 

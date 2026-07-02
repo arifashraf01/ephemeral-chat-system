@@ -1,6 +1,9 @@
 package com.arif.chatapp.controller;
 
+import com.arif.chatapp.dto.ChatMessagePayload;
 import com.arif.chatapp.dto.ChatMessageResponse;
+import com.arif.chatapp.dto.SeenPayload;
+import com.arif.chatapp.dto.TypingPayload;
 import com.arif.chatapp.model.Message;
 import com.arif.chatapp.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -66,100 +69,4 @@ public class ChatController {
 		messagingTemplate.convertAndSend("/topic/seen/" + updated.getSender().getEmail(), payload.getMessageId());
 	}
 
-	@MessageMapping("/chat.open")
-	public void openChat(@Payload ChatSessionPayload payload, Principal principal) {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-			return;
-		}
-		if (payload == null || payload.getPartnerId() == null) {
-			return;
-		}
-		log.info("Chat opened between {} and partner ID {}", principal.getName(), payload.getPartnerId());
-	}
-
-	@MessageMapping("/chat.close")
-	public void closeChat(@Payload ChatSessionPayload payload, Principal principal) {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-			return;
-		}
-		if (payload == null || payload.getPartnerId() == null) {
-			return;
-		}
-		messageService.deleteMessagesForUserByEmail(principal.getName(), payload.getPartnerId());
-	}
-
-	private static class TypingPayload {
-		private String senderEmail;
-		private String receiverEmail;
-
-		public String getSenderEmail() {
-			return senderEmail;
-		}
-
-		public void setSenderEmail(String senderEmail) {
-			this.senderEmail = senderEmail;
-		}
-
-		public String getReceiverEmail() {
-			return receiverEmail;
-		}
-
-		public void setReceiverEmail(String receiverEmail) {
-			this.receiverEmail = receiverEmail;
-		}
-	}
-
-	private static class SeenPayload {
-		private Long messageId;
-
-		public Long getMessageId() {
-			return messageId;
-		}
-
-		public void setMessageId(Long messageId) {
-			this.messageId = messageId;
-		}
-	}
-
-	private static class ChatMessagePayload {
-		private String receiverEmail;
-		private String content;
-
-		public String getReceiverEmail() {
-			return receiverEmail;
-		}
-
-		public void setReceiverEmail(String receiverEmail) {
-			this.receiverEmail = receiverEmail;
-		}
-
-		public String getContent() {
-			return content;
-		}
-
-		public void setContent(String content) {
-			this.content = content;
-		}
-	}
-
-	private static class ChatSessionPayload {
-		private Long userId;
-		private Long partnerId;
-
-		public Long getUserId() {
-			return userId;
-		}
-
-		public void setUserId(Long userId) {
-			this.userId = userId;
-		}
-
-		public Long getPartnerId() {
-			return partnerId;
-		}
-
-		public void setPartnerId(Long partnerId) {
-			this.partnerId = partnerId;
-		}
-	}
 }

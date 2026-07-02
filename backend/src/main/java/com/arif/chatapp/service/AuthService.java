@@ -48,6 +48,7 @@ public class AuthService {
         otp.setEmail(email);
         otp.setOtpCode(otpCode);
         otp.setExpiresAt(expiresAt);
+        otp.setFailedAttempts(0);
 
         otpRepository.save(otp);
         sendOtpEmail(email, otpCode);
@@ -76,12 +77,19 @@ public class AuthService {
         Otp savedOtp = otpRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("OTP not found"));
 
-        if (!savedOtp.getOtpCode().equals(otp)) {
-            throw new IllegalArgumentException("Invalid OTP");
+        if (savedOtp.getFailedAttempts() >= 5) {
+            otpRepository.delete(savedOtp);
+            throw new IllegalArgumentException("Too many failed attempts. Please request a new OTP.");
         }
 
         if (savedOtp.getExpiresAt().isBefore(Instant.now())) {
             throw new IllegalArgumentException("OTP expired");
+        }
+
+        if (!savedOtp.getOtpCode().equals(otp)) {
+            savedOtp.setFailedAttempts(savedOtp.getFailedAttempts() + 1);
+            otpRepository.save(savedOtp);
+            throw new IllegalArgumentException("Invalid OTP");
         }
 
         User user = userRepository.findByEmail(email).orElseGet(User::new);
