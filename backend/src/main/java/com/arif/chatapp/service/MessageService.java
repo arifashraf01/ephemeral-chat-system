@@ -155,29 +155,14 @@ public class MessageService {
                 }
         }
 
+        @org.springframework.transaction.annotation.Transactional
         public void deleteMessagesForUserByEmail(String userEmail, Long chatPartnerId) {
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
                 User partner = userRepository.findById(chatPartnerId)
                                 .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
 
-                List<Message> messages = new ArrayList<>();
-                messages.addAll(messageRepository.findBySenderAndReceiver(user, partner));
-                messages.addAll(messageRepository.findBySenderAndReceiver(partner, user));
-
-                if (messages.isEmpty()) {
-                        return;
-                }
-
-                for (Message message : messages) {
-                        if (user.equals(message.getSender())) {
-                                message.setDeletedForSender(true);
-                        }
-                        if (user.equals(message.getReceiver())) {
-                                message.setDeletedForReceiver(true);
-                        }
-                }
-
-                messageRepository.saveAll(messages);
+                messageRepository.softDeleteForSender(user, partner);
+                messageRepository.softDeleteForReceiver(user, partner);
         }
 }

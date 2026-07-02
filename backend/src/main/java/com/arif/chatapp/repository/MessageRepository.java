@@ -16,4 +16,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 			User reverseSender,
 			User reverseReceiver
 	);
+
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.data.jpa.repository.Query("UPDATE Message m SET m.deletedForSender = true WHERE m.sender = :user AND m.receiver = :partner")
+	void softDeleteForSender(@org.springframework.data.repository.query.Param("user") User user, @org.springframework.data.repository.query.Param("partner") User partner);
+
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.data.jpa.repository.Query("UPDATE Message m SET m.deletedForReceiver = true WHERE m.receiver = :user AND m.sender = :partner")
+	void softDeleteForReceiver(@org.springframework.data.repository.query.Param("user") User user, @org.springframework.data.repository.query.Param("partner") User partner);
 }
