@@ -100,32 +100,7 @@ public class MessageService {
                 .build();
     }
 
-    public Message sendMessage(Long senderId, Long receiverId, String content) {
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
 
-        boolean accepted = chatRequestRepository.findBySenderAndReceiver(sender, receiver)
-                .filter(request -> request.getStatus() == ChatRequest.Status.ACCEPTED)
-                .isPresent()
-                || chatRequestRepository.findBySenderAndReceiver(receiver, sender)
-                .filter(request -> request.getStatus() == ChatRequest.Status.ACCEPTED)
-                .isPresent();
-
-        if (!accepted) {
-            throw new IllegalStateException("Chat not allowed");
-        }
-
-        Message message = Message.builder()
-                .sender(sender)
-                .receiver(receiver)
-                .content(content)
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return messageRepository.save(message);
-    }
 
         public Message markAsSeenByRecipient(Long messageId, String recipientEmail) {
                 Message message = messageRepository.findById(messageId)
@@ -138,21 +113,6 @@ public class MessageService {
 
                 message.setStatus(Message.Status.SEEN);
                 return messageRepository.save(message);
-        }
-
-        public void deleteChatMessages(Long userId, Long partnerId) {
-                User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-                User partner = userRepository.findById(partnerId)
-                                .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
-
-                List<Message> toDelete = new ArrayList<>();
-                toDelete.addAll(messageRepository.findBySenderAndReceiver(user, partner));
-                toDelete.addAll(messageRepository.findBySenderAndReceiver(partner, user));
-
-                if (!toDelete.isEmpty()) {
-                        messageRepository.deleteAll(toDelete);
-                }
         }
 
         @org.springframework.transaction.annotation.Transactional
