@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URLS } from '../config'
+import Spinner from '../components/Spinner'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -61,6 +62,7 @@ export default function Signup() {
   const [otp, setOtp] = useState('')
   const [password, setPassword] = useState('')
   const [step, setStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
 
   const getErrorMessage = async (response, fallbackMessage) => {
     try {
@@ -73,6 +75,7 @@ export default function Signup() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setIsLoading(true)
 
     if (step === 1) {
       try {
@@ -91,6 +94,8 @@ export default function Signup() {
         setStep(2)
       } catch {
         alert('Failed to send OTP. Please try again.')
+      } finally {
+        setIsLoading(false)
       }
       return
     }
@@ -111,6 +116,8 @@ export default function Signup() {
       navigate('/login')
     } catch {
       alert('Verification failed. Please check the OTP and try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -158,8 +165,8 @@ export default function Signup() {
             </>
           )}
 
-          <button type="submit" style={buttonStyle}>
-            {step === 1 ? 'Send OTP' : 'Verify & Signup'}
+          <button type="submit" style={buttonStyle} disabled={isLoading}>
+            {isLoading ? <Spinner size={16} text="" color="#ecfdf5" inline /> : (step === 1 ? 'Send OTP' : 'Verify & Signup')}
           </button>
         </form>
       </div>

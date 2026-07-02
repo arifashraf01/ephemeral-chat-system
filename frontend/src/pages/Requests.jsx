@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URLS } from '../config'
+import Spinner from '../components/Spinner'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -268,7 +269,7 @@ export default function Requests() {
         <div style={gridStyle}>
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Incoming Requests</h3>
-            {isLoading ? <p style={{ color: '#166534' }}>Loading...</p> : (
+            {isLoading ? <Spinner text="Loading..." /> : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {incoming.length === 0 && <p style={{ color: '#166534' }}>No incoming requests.</p>}
                 {incoming.map((item) => (
@@ -301,11 +302,12 @@ export default function Requests() {
                 </div>
               ))}
             </div>
+            )}
           </section>
 
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Sent Requests</h3>
-            {isLoading ? <p style={{ color: '#166534' }}>Loading...</p> : (
+            {isLoading ? <Spinner text="Loading..." /> : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {sent.length === 0 && <p style={{ color: '#166534' }}>No sent requests.</p>}
                 {sent.map((item) => (
@@ -318,13 +320,14 @@ export default function Requests() {
                 </div>
               ))}
             </div>
+            )}
           </section>
         </div>
 
         <section style={{ ...sectionStyle, marginTop: '18px' }}>
           <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Accepted Chats</h3>
           {isLoading ? (
-            <p style={{ margin: 0, color: '#166534' }}>Loading...</p>
+            <Spinner text="Loading..." />
           ) : acceptedChatPartners.length === 0 ? (
             <p style={{ margin: 0, color: '#166534' }}>No accepted chats yet.</p>
           ) : (
@@ -343,8 +346,9 @@ export default function Requests() {
                   Chat
                 </button>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

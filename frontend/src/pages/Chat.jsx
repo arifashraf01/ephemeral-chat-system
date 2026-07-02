@@ -3,6 +3,7 @@ import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import { useLocation } from 'react-router-dom'
 import { API_URLS } from '../config'
+import Spinner from '../components/Spinner'
 
 const containerStyle = {
   minHeight: '100vh',
@@ -352,7 +353,7 @@ export default function Chat() {
         )}
 
           <div ref={messagesRef} className="chat-scroll-hidden" style={listStyle}>
-            {isLoading && <div style={{ color: '#166534', textAlign: 'center' }}>Loading messages...</div>}
+            {isLoading && <Spinner text="Loading messages..." />}
             {!isLoading && messages.length === 0 && <div style={{ color: '#166534', textAlign: 'center' }}>No messages yet.</div>}
             {!isLoading && messages.map((msg, index) => {
               const isSelf = msg.self

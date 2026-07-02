@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_URLS } from '../config'
+import Spinner from '../components/Spinner'
 
 const pageStyle = {
   minHeight: '100vh',
@@ -66,6 +67,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const getErrorMessage = async (response, fallbackMessage) => {
     try {
@@ -78,6 +80,7 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setIsLoading(true)
 
     try {
       const response = await fetch(API_URLS.authLogin, {
@@ -98,6 +101,8 @@ export default function Login() {
       navigate('/requests')
     } catch {
       alert('Login failed. Please check your credentials and try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -130,7 +135,9 @@ export default function Login() {
             required
           />
 
-          <button type="submit" style={buttonStyle}>Login</button>
+          <button type="submit" style={buttonStyle} disabled={isLoading}>
+            {isLoading ? <Spinner size={16} text="" color="#ecfdf5" inline /> : 'Login'}
+          </button>
         </form>
 
         <div style={mutedText}>
