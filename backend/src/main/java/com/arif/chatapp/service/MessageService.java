@@ -77,7 +77,16 @@ public class MessageService {
                 partner,
                 partner,
                 currentUser
-        );
+        )
+        .stream()
+        .filter(msg -> {
+            if (msg.getSender().getEmail().equals(currentUserEmail)) {
+                return !msg.isDeletedForSender();
+            } else {
+                return !msg.isDeletedForReceiver();
+            }
+        })
+        .toList();
     }
 
     public ChatMessageResponse toChatMessageResponse(Message message) {
