@@ -71,6 +71,7 @@ export default function Requests() {
   const [incoming, setIncoming] = useState([])
   const [sent, setSent] = useState([])
   const [chats, setChats] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [receiverEmail, setReceiverEmail] = useState('')
   const navigate = useNavigate()
 
@@ -135,6 +136,8 @@ export default function Requests() {
       setChats(Array.isArray(chatsData) ? chatsData : [])
     } catch {
       alert('Failed to load requests.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -265,8 +268,10 @@ export default function Requests() {
         <div style={gridStyle}>
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Incoming Requests</h3>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {incoming.map((item) => (
+            {isLoading ? <p style={{ color: '#166534' }}>Loading...</p> : (
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {incoming.length === 0 && <p style={{ color: '#166534' }}>No incoming requests.</p>}
+                {incoming.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.senderEmail}</div>
@@ -300,8 +305,10 @@ export default function Requests() {
 
           <section style={sectionStyle}>
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Sent Requests</h3>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {sent.map((item) => (
+            {isLoading ? <p style={{ color: '#166534' }}>Loading...</p> : (
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {sent.length === 0 && <p style={{ color: '#166534' }}>No sent requests.</p>}
+                {sent.map((item) => (
                 <div key={item.id} style={cardStyle}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.receiverEmail}</div>
@@ -316,11 +323,13 @@ export default function Requests() {
 
         <section style={{ ...sectionStyle, marginTop: '18px' }}>
           <h3 style={{ margin: '0 0 12px', fontSize: '18px', letterSpacing: '0.3px' }}>Accepted Chats</h3>
-          {acceptedChatPartners.length === 0 && (
+          {isLoading ? (
+            <p style={{ margin: 0, color: '#166534' }}>Loading...</p>
+          ) : acceptedChatPartners.length === 0 ? (
             <p style={{ margin: 0, color: '#166534' }}>No accepted chats yet.</p>
-          )}
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {acceptedChatPartners.map((email) => (
+          ) : (
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {acceptedChatPartners.map((email) => (
               <div key={email} style={cardStyle}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '15px' }}>{email}</div>

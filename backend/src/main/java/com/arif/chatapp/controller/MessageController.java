@@ -57,6 +57,8 @@ public class MessageController {
     @GetMapping("/conversation")
     public ResponseEntity<List<ChatMessageResponse>> conversation(
             @RequestParam String partnerEmail,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
             Authentication authentication
     ) {
         if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
@@ -65,7 +67,9 @@ public class MessageController {
 
         List<ChatMessageResponse> response = messageService.getConversationByEmail(
                 authentication.getName(),
-                partnerEmail
+                partnerEmail,
+                page,
+                size
         )
                 .stream()
                 .map(messageService::toChatMessageResponse)

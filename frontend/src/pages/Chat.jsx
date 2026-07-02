@@ -42,6 +42,7 @@ const listStyle = {
 export default function Chat() {
   const location = useLocation()
   const [messages, setMessages] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [chats, setChats] = useState([])
   const [partnerEmail, setPartnerEmail] = useState('')
   const [content, setContent] = useState('')
@@ -145,6 +146,7 @@ export default function Chat() {
         return
       }
 
+      setIsLoading(true)
       try {
         const response = await fetch(API_URLS.messagesConversation(partnerEmail), {
           method: 'GET',
@@ -162,6 +164,8 @@ export default function Chat() {
         setMessages(list.map(normalizeMessage).filter(Boolean))
       } catch (error) {
         console.error('Failed to fetch conversation', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -348,8 +352,9 @@ export default function Chat() {
         )}
 
           <div ref={messagesRef} className="chat-scroll-hidden" style={listStyle}>
-            {messages.length === 0 && <div style={{ color: '#166534' }}>No messages yet.</div>}
-            {messages.map((msg, index) => {
+            {isLoading && <div style={{ color: '#166534', textAlign: 'center' }}>Loading messages...</div>}
+            {!isLoading && messages.length === 0 && <div style={{ color: '#166534', textAlign: 'center' }}>No messages yet.</div>}
+            {!isLoading && messages.map((msg, index) => {
               const isSelf = msg.self
               return (
                 <div

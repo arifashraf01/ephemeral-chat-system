@@ -17,6 +17,14 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 			User reverseReceiver
 	);
 
+	org.springframework.data.domain.Page<Message> findBySenderAndReceiverOrSenderAndReceiverOrderByTimestampDesc(
+			User sender,
+			User receiver,
+			User reverseSender,
+			User reverseReceiver,
+			org.springframework.data.domain.Pageable pageable
+	);
+
 	@org.springframework.data.jpa.repository.Modifying
 	@org.springframework.data.jpa.repository.Query("UPDATE Message m SET m.deletedForSender = true WHERE m.sender = :user AND m.receiver = :partner")
 	void softDeleteForSender(@org.springframework.data.repository.query.Param("user") User user, @org.springframework.data.repository.query.Param("partner") User partner);

@@ -62,7 +62,7 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    public List<Message> getConversationByEmail(String currentUserEmail, String partnerEmail) {
+    public List<Message> getConversationByEmail(String currentUserEmail, String partnerEmail, int page, int size) {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         User partner = userRepository.findByEmail(partnerEmail)
@@ -72,21 +72,25 @@ public class MessageService {
             throw new IllegalStateException("Chat not allowed");
         }
 
-        return messageRepository.findBySenderAndReceiverOrSenderAndReceiverOrderByTimestampAsc(
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        
+        List<Message> content = messageRepository.findBySenderAndReceiverOrSenderAndReceiverOrderByTimestampDesc(
                 currentUser,
                 partner,
                 partner,
-                currentUser
-        )
-        .stream()
-        .filter(msg -> {
-            if (msg.getSender().getEmail().equals(currentUserEmail)) {
-                return !msg.isDeletedForSender();
-            } else {
-                return !msg.isDeletedForReceiver();
+                currentUser,
+                pageable
+        ).getContent();
+
+        List<Message> filtered = new java.util.ArrayList<>();
+        for (int i = content.size() - 1; i >= 0; i--) {
+            Message msg = content.get(i);
+            boolean keep = msg.getSender().getEmail().equals(currentUserEmail) ? !msg.isDeletedForSender() : !msg.isDeletedForReceiver();
+            if (keep) {
+                filtered.add(msg);
             }
-        })
-        .toList();
+        }
+        return filtered;
     }
 
     public ChatMessageResponse toChatMessageResponse(Message message) {
