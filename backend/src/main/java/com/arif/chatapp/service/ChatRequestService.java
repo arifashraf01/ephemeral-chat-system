@@ -35,13 +35,11 @@ public class ChatRequestService {
             throw new IllegalArgumentException("Cannot send request to yourself");
         }
 
-        boolean exists = chatRequestRepository.existsBySenderAndReceiverOrSenderAndReceiver(
-                sender,
-                receiver,
-                receiver,
-                sender
-        );
-        if (exists) {
+        boolean pendingOrAcceptedExists = chatRequestRepository.findBySenderAndReceiver(sender, receiver)
+                .filter(req -> req.getStatus() != ChatRequest.Status.REJECTED).isPresent()
+                || chatRequestRepository.findBySenderAndReceiver(receiver, sender)
+                .filter(req -> req.getStatus() != ChatRequest.Status.REJECTED).isPresent();
+        if (pendingOrAcceptedExists) {
             throw new IllegalArgumentException("Request already exists");
         }
 
