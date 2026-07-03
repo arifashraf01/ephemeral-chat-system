@@ -56,6 +56,15 @@ const labelStyle = {
   fontSize: '14px',
 }
 
+const getErrorMessage = async (response, fallbackMessage) => {
+    try {
+      const payload = await response.json()
+      return payload?.message || fallbackMessage
+    } catch {
+      return fallbackMessage
+    }
+  }
+
 export default function Signup() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -64,14 +73,6 @@ export default function Signup() {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
 
-  const getErrorMessage = async (response, fallbackMessage) => {
-    try {
-      const payload = await response.json()
-      return payload?.message || fallbackMessage
-    } catch {
-      return fallbackMessage
-    }
-  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
