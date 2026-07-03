@@ -10,6 +10,7 @@ import com.arif.chatapp.repository.MessageRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
@@ -44,7 +45,7 @@ public class MessageService {
         return chatExists || acceptedRequest;
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Message sendMessageByEmail(String senderEmail, String receiverEmail, String content) {
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
