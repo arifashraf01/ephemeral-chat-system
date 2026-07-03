@@ -63,13 +63,7 @@ const linkStyle = {
   textDecoration: 'none',
 }
 
-export default function Login() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  const getErrorMessage = async (response, fallbackMessage) => {
+const getErrorMessage = async (response, fallbackMessage) => {
     try {
       const payload = await response.json()
       return payload?.message || fallbackMessage
@@ -77,6 +71,13 @@ export default function Login() {
       return fallbackMessage
     }
   }
+
+export default function Login() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
 
   const handleSubmit = async (event) => {
     event.preventDefault()
