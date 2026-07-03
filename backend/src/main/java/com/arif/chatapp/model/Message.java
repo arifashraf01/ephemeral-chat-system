@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -26,8 +27,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "messages", indexes = {
-    @jakarta.persistence.Index(name = "idx_message_sender_receiver", columnList = "sender_id, receiver_id"),
-    @jakarta.persistence.Index(name = "idx_message_timestamp", columnList = "timestamp")
+    @Index(name = "idx_message_sender_receiver", columnList = "sender_id, receiver_id"),
+    @Index(name = "idx_message_timestamp", columnList = "timestamp")
 })
 public class Message {
 
