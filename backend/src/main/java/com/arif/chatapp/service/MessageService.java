@@ -66,7 +66,7 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<Message> getConversationByEmail(String currentUserEmail, String partnerEmail, int page, int size) {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -118,7 +118,7 @@ public class MessageService {
                 return messageRepository.save(message);
         }
 
-        @org.springframework.transaction.annotation.Transactional
+        @Transactional
         public void deleteMessagesForUserByEmail(String userEmail, Long chatPartnerId) {
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
