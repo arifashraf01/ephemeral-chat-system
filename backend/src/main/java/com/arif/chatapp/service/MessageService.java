@@ -10,6 +10,7 @@ import com.arif.chatapp.repository.MessageRepository;
 import com.arif.chatapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class MessageService {
             throw new IllegalStateException("Chat not allowed");
         }
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         
         List<Message> content = messageRepository.findConversation(
                 currentUser,
