@@ -180,6 +180,7 @@ export default function Chat() {
       styleTag.id = fadeStyleId
       styleTag.innerHTML = `
         @keyframes messageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes receivePulse { 0% { transform: scale(0.95); opacity: 0; } 50% { transform: scale(1.02); } 100% { transform: scale(1); opacity: 1; } }
         @keyframes pulseTyping { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .chat-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
         .chat-scroll-hidden::-webkit-scrollbar { display: none; width: 0; height: 0; }
@@ -404,7 +405,7 @@ export default function Chat() {
                       boxShadow: isSelf
                         ? '0 10px 20px rgba(21, 128, 61, 0.25)'
                         : '0 8px 16px rgba(15, 23, 42, 0.1)',
-                      animation: 'messageFade 0.35s ease',
+                      animation: isSelf ? 'messageFade 0.35s ease' : 'receivePulse 0.4s ease',
                       whiteSpace: 'pre-wrap',
                     }}
                   >
