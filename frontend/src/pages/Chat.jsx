@@ -44,6 +44,7 @@ export default function Chat() {
   const location = useLocation()
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [chats, setChats] = useState([])
   const [partnerEmail, setPartnerEmail] = useState('')
   const [content, setContent] = useState('')
@@ -423,6 +424,7 @@ export default function Chat() {
             const trimmedContent = content.trim()
             const localId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
 
+            setIsSending(true)
             try {
               const response = await fetch(API_URLS.messagesSend, {
                 method: 'POST',
@@ -460,6 +462,8 @@ export default function Chat() {
               setContent('')
             } catch {
               alert('Failed to send message')
+            } finally {
+              setIsSending(false)
             }
           }}
           style={{
@@ -511,9 +515,9 @@ export default function Chat() {
                   opacity: hasChat ? 1 : 0.6,
                   height: '46px',
                 }}
-                disabled={!hasChat || !partnerEmail}
+                disabled={!hasChat || !partnerEmail || isSending}
               >
-                Send
+                {isSending ? 'Sending...' : 'Send'}
               </button>
             </div>
         </form>
