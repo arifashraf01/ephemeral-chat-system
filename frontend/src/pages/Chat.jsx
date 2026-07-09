@@ -491,6 +491,7 @@ export default function Chat() {
                 rows={3}
                 placeholder="Type a message..."
                 value={content}
+                disabled={isSending}
                 onChange={(event) => {
                   const next = event.target.value
                   setContent(next)
