@@ -183,6 +183,9 @@ export default function Chat() {
         @keyframes pulseTyping { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .chat-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
         .chat-scroll-hidden::-webkit-scrollbar { display: none; width: 0; height: 0; }
+        .send-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .send-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(22, 101, 52, 0.4); }
+        .send-btn:active:not(:disabled) { transform: translateY(0); box-shadow: 0 8px 16px rgba(22, 101, 52, 0.2); }
       `
       document.head.appendChild(styleTag)
     }
@@ -511,6 +514,7 @@ export default function Chat() {
               />
               <button
                 type="submit"
+                className="send-btn"
                 style={{
                   padding: '12px 16px',
                   borderRadius: '14px',
