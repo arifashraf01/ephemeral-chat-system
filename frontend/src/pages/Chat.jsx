@@ -101,7 +101,6 @@ export default function Chat() {
     try {
       return JSON.parse(payload.body)
     } catch (error) {
-      console.warn('Failed to parse message body as JSON. Using raw payload.', error)
       return payload.body
     }
   }
