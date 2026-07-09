@@ -180,6 +180,7 @@ export default function Chat() {
       styleTag.id = fadeStyleId
       styleTag.innerHTML = `
         @keyframes messageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseTyping { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .chat-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
         .chat-scroll-hidden::-webkit-scrollbar { display: none; width: 0; height: 0; }
       `
@@ -416,7 +417,11 @@ export default function Chat() {
             })}
           </div>
 
-          {typingNotice && <p style={{ marginTop: '8px', color: '#15803d' }}>{typingNotice}</p>}
+          {typingNotice && (
+            <p style={{ marginTop: '8px', color: '#15803d', fontSize: '13px', fontStyle: 'italic', animation: 'pulseTyping 1.5s infinite' }}>
+              {typingNotice}
+            </p>
+          )}
 
         <form
           onSubmit={async (event) => {
