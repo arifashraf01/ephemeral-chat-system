@@ -265,7 +265,10 @@ export default function Chat() {
 
   useEffect(() => {
     if (!messagesRef.current) return
-    messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+    messagesRef.current.scrollTo({
+      top: messagesRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
   }, [messages, partnerEmail])
 
   return (
