@@ -1,5 +1,7 @@
 {
   "name": "frontend",
+  "description": "Frontend client for the Ephemeral Chat System",
+  "author": "arifa",
   "private": true,
   "version": "0.0.0",
   "type": "module",
