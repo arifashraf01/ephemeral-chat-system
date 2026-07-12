@@ -5,7 +5,6 @@ import com.arif.chatapp.dto.SendOtpRequest;
 import com.arif.chatapp.dto.VerifyOtpRequest;
 import com.arif.chatapp.service.AuthService;
 import jakarta.validation.Valid;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
