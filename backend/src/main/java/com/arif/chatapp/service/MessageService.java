@@ -105,27 +105,27 @@ public class MessageService {
 
 
 
-        public Message markAsSeenByRecipient(Long messageId, String recipientEmail) {
-                Message message = messageRepository.findById(messageId)
-                                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+    public Message markAsSeenByRecipient(Long messageId, String recipientEmail) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
 
-                String actualRecipient = message.getReceiver().getEmail();
-                if (!actualRecipient.equals(recipientEmail)) {
-                        throw new IllegalArgumentException("Only the recipient can mark a message as seen");
-                }
-
-                message.setStatus(Message.Status.SEEN);
-                return messageRepository.save(message);
+        String actualRecipient = message.getReceiver().getEmail();
+        if (!actualRecipient.equals(recipientEmail)) {
+            throw new IllegalArgumentException("Only the recipient can mark a message as seen");
         }
 
-        @Transactional
-        public void deleteMessagesForUserByEmail(String userEmail, Long chatPartnerId) {
-                User user = userRepository.findByEmail(userEmail)
-                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-                User partner = userRepository.findById(chatPartnerId)
-                                .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
+        message.setStatus(Message.Status.SEEN);
+        return messageRepository.save(message);
+    }
 
-                messageRepository.softDeleteForSender(user, partner);
-                messageRepository.softDeleteForReceiver(user, partner);
-        }
+    @Transactional
+    public void deleteMessagesForUserByEmail(String userEmail, Long chatPartnerId) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User partner = userRepository.findById(chatPartnerId)
+                .orElseThrow(() -> new IllegalArgumentException("Partner not found"));
+
+        messageRepository.softDeleteForSender(user, partner);
+        messageRepository.softDeleteForReceiver(user, partner);
+    }
 }
