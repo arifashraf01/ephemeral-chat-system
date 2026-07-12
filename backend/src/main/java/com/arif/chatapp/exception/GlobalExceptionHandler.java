@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<Object>> handleMalformedJson(HttpMessageNotReadableException ex) {
 		ApiResponse<Object> response = ApiResponse.builder()
 				.success(false)
-				.message("Malformed JSON request body. Expected fields: email, password")
+				.message("Malformed JSON request body")
 				.data(null)
 				.build();
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
