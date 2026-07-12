@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -31,7 +31,7 @@ public class AuthService {
     @Value("${app.mail.from:}")
     private String mailFrom;
 
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public void sendOtp(String email) {
         Optional<Otp> existing = otpRepository.findByEmail(email);
