@@ -63,15 +63,6 @@ const linkStyle = {
   textDecoration: 'none',
 }
 
-const getErrorMessage = async (response, fallbackMessage) => {
-    try {
-      const payload = await response.json()
-      return payload?.message || fallbackMessage
-    } catch {
-      return fallbackMessage
-    }
-  }
-
 export default function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -93,7 +84,7 @@ export default function Login() {
       const data = await response.json().catch(() => null)
 
       if (!response.ok || !data?.token) {
-        const message = data?.message || (await getErrorMessage(response, 'Login failed. Please check your credentials and try again.'))
+        const message = data?.message || 'Login failed. Please check your credentials and try again.'
         alert(message)
         return
       }
