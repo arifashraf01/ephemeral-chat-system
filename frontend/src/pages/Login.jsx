@@ -63,6 +63,13 @@ const linkStyle = {
   textDecoration: 'none',
 }
 
+const labelStyle = {
+  display: 'block',
+  marginBottom: '6px',
+  fontWeight: 600,
+  fontSize: '14px',
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -107,7 +114,7 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit}>
-          <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>Email</label>
+          <label style={labelStyle}>Email</label>
           <input
             type="email"
             placeholder="you@example.com"
@@ -117,7 +124,7 @@ export default function Login() {
             required
           />
 
-          <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>Password</label>
+          <label style={labelStyle}>Password</label>
           <input
             type="password"
             placeholder="••••••••"
