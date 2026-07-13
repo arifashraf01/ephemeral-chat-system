@@ -57,13 +57,13 @@ const labelStyle = {
 }
 
 const getErrorMessage = async (response, fallbackMessage) => {
-    try {
-      const payload = await response.json()
-      return payload?.message || fallbackMessage
-    } catch {
-      return fallbackMessage
-    }
+  try {
+    const payload = await response.json()
+    return payload?.message || fallbackMessage
+  } catch {
+    return fallbackMessage
   }
+}
 
 export default function Signup() {
   const navigate = useNavigate()
