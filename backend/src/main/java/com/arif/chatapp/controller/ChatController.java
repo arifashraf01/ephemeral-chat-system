@@ -25,7 +25,7 @@ public class ChatController {
 
 	@MessageMapping("/chat.send")
 	public ChatMessageResponse sendMessage(@Payload ChatMessagePayload payload, Principal principal) {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+		if (!isValidPrincipal(principal)) {
 			throw new IllegalArgumentException("WebSocket authentication is required");
 		}
 
@@ -47,7 +47,7 @@ public class ChatController {
 
 	@MessageMapping("/chat.typing")
 	public void typing(@Payload TypingPayload payload, Principal principal) {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+		if (!isValidPrincipal(principal)) {
 			return;
 		}
 		if (payload == null || payload.getReceiverEmail() == null) {
@@ -58,7 +58,7 @@ public class ChatController {
 
 	@MessageMapping("/chat.seen")
 	public void markSeen(@Payload SeenPayload payload, Principal principal) {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+		if (!isValidPrincipal(principal)) {
 			return;
 		}
 		if (payload == null || payload.getMessageId() == null) {
@@ -69,4 +69,8 @@ public class ChatController {
 		messagingTemplate.convertAndSend("/topic/seen/" + updated.getSender().getEmail(), payload.getMessageId());
 	}
 
+
+	private boolean isValidPrincipal(Principal principal) {
+		return principal != null && principal.getName() != null && !principal.getName().isBlank();
+	}
 }
