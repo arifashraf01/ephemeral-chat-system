@@ -73,7 +73,6 @@ export default function Signup() {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
 
-
   const handleSubmit = async (event) => {
     event.preventDefault()
     setIsLoading(true)
