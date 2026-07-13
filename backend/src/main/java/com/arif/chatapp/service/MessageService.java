@@ -85,10 +85,8 @@ public class MessageService {
                 pageable
         ).getContent();
 
-        List<Message> reversed = new ArrayList<>();
-        for (int i = content.size() - 1; i >= 0; i--) {
-            reversed.add(content.get(i));
-        }
+        List<Message> reversed = new ArrayList<>(content);
+        java.util.Collections.reverse(reversed);
         return reversed;
     }
 
