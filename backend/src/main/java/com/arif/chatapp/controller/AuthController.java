@@ -36,7 +36,7 @@ public class AuthController {
     public Map<String, String> login(@Valid @RequestBody LoginRequest request) {
         log.info("Login request received: email='{}'", request.getEmail());
         String token = authService.login(request.getEmail(), request.getPassword());
-        return java.util.Map.of("token", token);
+        return Map.of("token", token);
     }
 
 }
