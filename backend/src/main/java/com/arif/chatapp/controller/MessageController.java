@@ -32,9 +32,7 @@ public class MessageController {
             @Valid @RequestBody SendMessageRequest request,
             Authentication authentication
     ) {
-        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
-            throw new IllegalArgumentException("Authorization header is required");
-        }
+        validateAuthentication(authentication);
 
         Message saved = messageService.sendMessageByEmail(
                 authentication.getName(),
@@ -62,9 +60,7 @@ public class MessageController {
             @RequestParam(defaultValue = "50") int size,
             Authentication authentication
     ) {
-        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
-            throw new IllegalArgumentException("Authorization header is required");
-        }
+        validateAuthentication(authentication);
 
         List<ChatMessageResponse> response = messageService.getConversationByEmail(
                 authentication.getName(),
@@ -77,5 +73,11 @@ public class MessageController {
                 .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    private void validateAuthentication(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new IllegalArgumentException("Authorization header is required");
+        }
     }
 }
